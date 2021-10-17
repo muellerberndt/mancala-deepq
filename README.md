@@ -1,2 +1,2 @@
 # Mancala DeepQ
-Solving the royal game with deep learning
+Solving the royal game with deep learning.
