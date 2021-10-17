@@ -1,2 +1,2 @@
-# ballgame-deepq
-Solving the royal ball game with deep learning
+# Mancala DeepQ
+Solving the royal game with deep learning.

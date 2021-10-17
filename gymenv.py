@@ -97,12 +97,13 @@ class MancalaEnv(gym.Env):
 
                 print("Opposite field has {} stones".format(self.state[opposite_index]))
 
-                if self.active_player == 0:
+                if self.active_player == 0 and ptr < 7:
                     self.state[7] += self.state[opposite_index] + 1
-                else:
+                    self.state[ptr] = self.state[opposite_index] = 0
+                elif ptr > 7:
                     self.state[0] += self.state[opposite_index] + 1
+                    self.state[ptr] = self.state[opposite_index] = 0
 
-                self.state[ptr] = self.state[opposite_index] = 0
 
         # Switch active player except if the last move ended in the player's own "goal" field
 
@@ -140,19 +141,19 @@ class MancalaEnv(gym.Env):
         print("Number of stones in player 1's fields: {}".format(np.sum(self.state[1:7])))
         print("Number of stones in player 2's fields: {}".format(np.sum(self.state[8:14])))
 
-        if np.sum(self.state[1:6]) == 0:
+        if np.sum(self.state[1:7]) == 0:
             # Player 1 is done
 
             for i in range(8, 14):
-                self.state[7] += self.state[i]
+                self.state[0] += self.state[i]
                 self.state[i] = 0
 
             done = True
 
         elif np.sum(self.state[8:14]) == 0:
 
-            for i in range(1, 6):
-                self.state[0] += self.state[i]
+            for i in range(1, 7):
+                self.state[7] += self.state[i]
                 self.state[i] = 0
 
             done = True
