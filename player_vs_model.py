@@ -72,7 +72,6 @@ while 1:
 
                 action = env.get_action_from_coords(event.pos)
 
-                if action > 0:
                     try:
                         state, reward, done, info = env.step(action)
                     except InvalidActionError:
