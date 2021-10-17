@@ -30,12 +30,6 @@ if torch.cuda.is_available():
 
     device = torch.device('cuda')
 
-    # World settings
-
-    WORLD_SQUARE_LEN = 16
-    STARTING_LIFE = 512
-    MAX_APPLES = 1
-
     # Training settings
 
     BATCH_SIZE = 256
@@ -57,12 +51,6 @@ else:
 
     device = torch.device('cpu')
 
-    # World settings
-
-    WORLD_SQUARE_LEN = 6
-    STARTING_LIFE = 64
-    MAX_APPLES = 1
-
     # Training settings
 
     BATCH_SIZE = 128
@@ -82,31 +70,15 @@ else:
 
 class MancalaAgentModel(nn.Module):
 
-    def __init__(self, world_shape):
+    def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        def conv2d_size_out(size, kernel_size=KERNEL_SIZE, stride=STRIDE):
-            return (size - (kernel_size - 1) - 1) // stride + 1
-
-        self.l1 = nn.Conv2d(1, 16, KERNEL_SIZE, stride=STRIDE)
-        self.l2 = nn.Conv2d(16, 32, KERNEL_SIZE, stride=STRIDE)
-
-        convw = conv2d_size_out(conv2d_size_out(world_shape[0]))
-        convh = conv2d_size_out(conv2d_size_out(world_shape[1]))
-
-        linear_input_size = convw * convh * 32
-
-        self.fc1 = nn.Linear(linear_input_size, 256)
-        self.fc2 = nn.Linear(256, 4)
+        self.fc1 = nn.Linear(14, 512)
+        self.fc2 = nn.Linear(512, 6)
 
     def forward(self, x):
-        x = F.relu(self.l1(x))
-        x = F.relu(self.l2(x))
-
-        flat = x.view(x.shape[0], -1)
-
-        x = F.relu(self.fc1(flat))
-        x = self.fc2(x)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
 
         return x
 

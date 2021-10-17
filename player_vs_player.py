@@ -2,7 +2,7 @@ import os
 import pygame
 from pygame.locals import *
 
-from gymenv import MancalaEnv, InvalidActionError
+from gymenv import MancalaEnv, InvalidActionError, InvalidCoordinatesError
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
 os.environ['SDL_VIDEO_CENTERED'] = '0'
@@ -22,14 +22,18 @@ while 1:
             pygame.quit()
         elif event.type == MOUSEBUTTONDOWN:
 
-            action = env.get_index_from_coords(event.pos)
+            try:
+                action = env.get_action_from_coords(event.pos)
+            except InvalidCoordinatesError:
+                continue
 
-            if action > 0:
-                try:
-                    state, reward, done, info = env.step(action)
-                except InvalidActionError:
-                    print("Action is invalid")
-                    pass
+            print("Selected action: {}".format(action))
+
+            try:
+                state, reward, done, info = env.step(action)
+            except InvalidActionError:
+                print("Action is invalid")
+                pass
 
             print("Next active player: {}\nPlayer 1 score: {}\nPlayer 2 score: {}".format(
                 env.get_active_player(),

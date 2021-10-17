@@ -8,6 +8,9 @@ import gym
 class InvalidActionError(Exception):
     pass
 
+class InvalidCoordinatesError(Exception):
+    pass
+
 PIXEL_WIDTH = 150
 
 WHITE = (255, 255, 255)
@@ -68,16 +71,26 @@ class MancalaEnv(gym.Env):
         return ptr
 
     def do_action(self, action: int):
-        n_stones = self.state[action]
+        """
+        The player chooses an action between 0 and 5.
+        The action will affect different fields depending on which player's turn it is.
+        """
+        
+        if self.active_player == 0:
+            index = action + 1
+        else:
+            index = 8 + action
+        
+        n_stones = self.state[index]
 
-        print("Selected field: {}\nNumber of stones in selected field: {}".format(action, n_stones))
+        print("Selected field: {}\nNumber of stones in selected field: {}".format(index, n_stones))
 
         if n_stones == 0:
             raise InvalidActionError
 
-        self.state[action] = 0
+        self.state[index] = 0
 
-        ptr = action
+        ptr = index
 
         for i in range(n_stones):
             # Advance a "pointer" on the state array that follows certain rules.
@@ -268,7 +281,7 @@ class MancalaEnv(gym.Env):
 
             pygame.display.flip()
 
-    def get_index_from_coords(self, pos: Tuple) -> int:
+    def get_action_from_coords(self, pos: Tuple) -> int:
         '''
         Determine the field clicked by the player from pixel coordinates.
         Returns the state index selected if the coordinates are within the active player's
@@ -277,10 +290,10 @@ class MancalaEnv(gym.Env):
 
         if self.active_player == 0 and PIXEL_WIDTH < pos[1] < PIXEL_WIDTH * 2 \
                 and MARGIN + PIXEL_WIDTH < pos[0] < (MARGIN + PIXEL_WIDTH) * 7:
-            return math.floor(pos[0] / PIXEL_WIDTH)
+            return math.floor(pos[0] / PIXEL_WIDTH) - 1
 
         if self.active_player == 1 and 3 * PIXEL_WIDTH < pos[1] < 4 * PIXEL_WIDTH \
                 and MARGIN + PIXEL_WIDTH < pos[0] < (MARGIN + PIXEL_WIDTH) * 7:
-            return 7 + math.floor(pos[0] / PIXEL_WIDTH)
+            return math.floor(pos[0] / PIXEL_WIDTH) - 1
 
-        return 0
+        raise InvalidCoordinatesError
