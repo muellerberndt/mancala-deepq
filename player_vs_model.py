@@ -58,23 +58,13 @@ while 1:
 
         values = policy_net(input_t).to(device)
 
-        actions = torch.topk(values, 3).indices[0]
-
-        print("Actions topk: {}".format(actions))
+        actions = torch.argmax(values)
 
         try:
             state, reward, done, info = env.step(actions[0])
         except InvalidActionError:
-            print("Top action invalid, trying second best")
-            try:
-                state, reward, done, info = env.step(actions[1])
-            except InvalidActionError:
-                print("Second best action invalid, trying third best")
-                try:
-                    state, reward, done, info = env.step(actions[2])
-                except InvalidActionError:
-                    print("Top 3 actions invalid, resetting environment")
-                    env.reset()
+            print("Invalid action selected, resetting environment")
+            env.reset()
 
     else:
         for event in pygame.event.get():

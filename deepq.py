@@ -195,10 +195,10 @@ def extract_tensors(experiences):
 
 if __name__ == '__main__':
 
-    torch.set_default_dtype(torch.double)
+    # torch.set_default_dtype(torch.double)
 
-    os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
-    os.environ['SDL_VIDEO_CENTERED'] = '0'
+    # os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
+    # os.environ['SDL_VIDEO_CENTERED'] = '0'
 
     env = ScaledFloatFrame(MancalaEnv( has_screen=False))
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
