@@ -117,7 +117,6 @@ class MancalaEnv(gym.Env):
                     self.state[0] += self.state[opposite_index] + 1
                     self.state[ptr] = self.state[opposite_index] = 0
 
-
         # Switch active player except if the last move ended in the player's own "goal" field
 
         if self.active_player == 0 and ptr != 7:
@@ -142,6 +141,9 @@ class MancalaEnv(gym.Env):
     def step(self, action) -> Tuple:
 
         done = False
+
+        player = self.active_player + 1
+        initial_score = self.get_player_score(player)
 
         self.do_action(action)
 
@@ -171,9 +173,9 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-        # TODO: Calculate reward
+        reward = self.get_player_score(player) - initial_score
 
-        reward = 0
+        print("Reward: {}".format(reward))
 
         return self.get_observation(), reward, done, {}
 

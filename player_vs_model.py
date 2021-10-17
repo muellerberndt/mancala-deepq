@@ -4,7 +4,7 @@ import pygame
 from pygame.locals import MOUSEBUTTONDOWN, QUIT
 import torch
 
-from gymenv import MancalaEnv, InvalidActionError
+from gymenv import MancalaEnv, InvalidActionError, InvalidCoordinatesError
 from deepq import MancalaAgentModel
 
 model_fn = sys.argv[1] if len(sys.argv) > 1 else os.path.join("save", "policy")
@@ -58,13 +58,23 @@ while 1:
 
         values = policy_net(input_t).to(device)
 
-        action = torch.argmax(values)
+        actions = torch.topk(values, 3).indices[0]
+
+        print("Actions topk: {}".format(actions))
 
         try:
-            state, reward, done, info = env.step(action)
+            state, reward, done, info = env.step(actions[0])
         except InvalidActionError:
-            print("The agent has chosen an invalid action.")
-            env.reset()
+            print("Top action invalid, trying second best")
+            try:
+                state, reward, done, info = env.step(actions[1])
+            except InvalidActionError:
+                print("Second best action invalid, trying third best")
+                try:
+                    state, reward, done, info = env.step(actions[2])
+                except InvalidActionError:
+                    print("Top 3 actions invalid, resetting environment")
+                    env.reset()
 
     else:
         for event in pygame.event.get():
@@ -73,7 +83,10 @@ while 1:
                 pygame.quit()
             elif event.type == MOUSEBUTTONDOWN:
 
-                action = env.get_action_from_coords(event.pos)
+                try:
+                    action = env.get_action_from_coords(event.pos)
+                except InvalidCoordinatesError:
+                    continue
 
                 try:
                     state, reward, done, info = env.step(action)
