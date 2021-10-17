@@ -25,13 +25,16 @@ else:
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
 os.environ['SDL_VIDEO_CENTERED'] = '0'
 
-# Load the trained policy net
+''' 
+TODO: Load the trained policy net
+policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+policy_net.eval()
+'''
 
-# policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
-# policy_net.eval()
+policy_net = MancalaAgentModel()
 
 env = MancalaEnv(has_screen=True)
-policy_net = MancalaAgentModel()
+
 
 state = env.reset()
 
@@ -64,7 +67,6 @@ while 1:
             env.reset()
 
     else:
-
         for event in pygame.event.get():
 
             if event.type == QUIT:

@@ -200,15 +200,13 @@ if __name__ == '__main__':
     os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
     os.environ['SDL_VIDEO_CENTERED'] = '0'
 
-    world_shape = (WORLD_SQUARE_LEN, WORLD_SQUARE_LEN)
-
-    env = ScaledFloatFrame(MancalaEnv(world_shape, has_screen=False))
+    env = ScaledFloatFrame(MancalaEnv( has_screen=False))
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
     agent = Agent(strategy, 4, device)
     memory = ReplayMem(MEMORY_SIZE)
 
-    policy_net = MancalaAgentModel(world_shape).to(device)
-    target_net = MancalaAgentModel(world_shape).to(device)
+    policy_net = MancalaAgentModel().to(device)
+    target_net = MancalaAgentModel().to(device)
 
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
