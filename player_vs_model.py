@@ -58,10 +58,10 @@ while 1:
 
         values = policy_net(input_t).to(device)
 
-        actions = torch.argmax(values)
+        action = torch.argmax(values)
 
         try:
-            state, reward, done, info = env.step(actions[0])
+            state, reward, done, info = env.step(action)
         except InvalidActionError:
             print("Invalid action selected, resetting environment")
             env.reset()
