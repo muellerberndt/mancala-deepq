@@ -60,7 +60,8 @@ while 1:
         try:
             state, reward, done, info = env.step(action)
         except InvalidActionError:
-            print("Action is invalid")
+            print("The agent has chosen an invalid action.")
+            env.reset()
 
     else:
 
@@ -72,10 +73,10 @@ while 1:
 
                 action = env.get_action_from_coords(event.pos)
 
-                    try:
-                        state, reward, done, info = env.step(action)
-                    except InvalidActionError:
-                        print("Action is invalid")
+                try:
+                    state, reward, done, info = env.step(action)
+                except InvalidActionError:
+                    print("Action is invalid")
 
                 print("Next active player: {}\nPlayer 1 score: {}\nPlayer 2 score: {}".format(
                     env.get_active_player(),
