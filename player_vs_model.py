@@ -8,6 +8,8 @@ import torch
 from gymenv import MancalaEnv, InvalidCoordinatesError
 from deepq import MancalaAgentModel
 
+state = 0
+
 model_fn = sys.argv[1] if len(sys.argv) > 1 else os.path.join("save", "policy")
 MODEL_SAVE_DIR = 'save'
 
@@ -50,19 +52,25 @@ state = env.reset()
 clock = pygame.time.Clock()
 
 
-def debug_print(env, reward):
-    print("Last reward: {}, Next active player: {}\nValid_actions: {}]\nPlayer 1 score: {}\nPlayer 2 score: {}\n\n".format(
-        reward,
-        env.get_active_player(),
-        env.get_valid_actions(),
-        env.get_player_score(1),
-        env.get_player_score(2)
+def debug_print(player, initial_state, env, action, reward):
+
+    format_state = lambda s: "[{}] {} [{}] {}".format(s[0], s[1:7], s[7], s[8:14])
+
+    print("{} action: {}\nState before:{}\nState after: {}\nReward: {}\n".format(
+        player,
+        action,
+        format_state(initial_state),
+        format_state(env.state),
+        reward
     ))
 
 
 def handle_game_end():
     if done:
-        print("Game has ended.")
+        print("Game has ended!\nFinal scores: P1 {}, P2 {}".format(
+            env.get_player_score(1),
+            env.get_player_score(2)
+              ))
         env.reset()
 
 
@@ -91,8 +99,10 @@ while 1:
         env.indicate_action_on_screen(action)
         time.sleep(0.75)
 
+        initial_state = env.state.copy()
         state, reward, done, info = env.step(action)
-        debug_print(env, reward)
+
+        debug_print("AI", initial_state, env, action, reward)
 
         if done:
             handle_game_end()
@@ -112,12 +122,10 @@ while 1:
                 valid_actions = env.get_valid_actions()
 
                 if action in valid_actions[0]:
+                    initial_state = env.state.copy()
                     state, reward, done, info = env.step(action)
-                    debug_print(env, reward)
+                    debug_print("Human", initial_state, env, action, reward)
 
                 if done:
                     handle_game_end()
-
-
-
 

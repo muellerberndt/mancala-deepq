@@ -85,7 +85,7 @@ class MancalaEnv(gym.Env):
         
         n_stones = self.state[index]
 
-        print("Selected field: {}\nNumber of stones in selected field: {}".format(index, n_stones))
+        print("[ENV] Selected field: {}\n[ENV] Number of stones in selected field: {}\n".format(index, n_stones))
 
         if n_stones == 0:
             raise InvalidActionError
