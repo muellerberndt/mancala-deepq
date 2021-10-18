@@ -73,6 +73,13 @@ while 1:
 
     if env.get_active_player() == 2:  # AI
 
+        # Create action mask
+
+        action_mask = torch.empty(6, dtype=torch.float).fill_(-float('inf'))
+        valid_actions = env.get_valid_actions()
+        action_mask[tuple(valid_actions)] = 1.
+        action_mask = action_mask.unsqueeze(0)
+
         input_t = torch.FloatTensor(state[2]).unsqueeze(0).to(device)
 
         values = policy_net(input_t, action_mask).to(device)
