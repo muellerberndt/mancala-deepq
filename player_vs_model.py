@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import pygame
 from pygame.locals import MOUSEBUTTONDOWN, QUIT
 import torch
@@ -86,6 +87,10 @@ while 1:
 
         action = torch.argmax(values)
 
+        time.sleep(0.25)
+        env.indicate_action_on_screen(action)
+        time.sleep(0.75)
+
         state, reward, done, info = env.step(action)
         debug_print(env, reward)
 
@@ -104,13 +109,15 @@ while 1:
                 except InvalidCoordinatesError:
                     continue
 
-                state, reward, done, info = env.step(action)
-                debug_print(env, reward)
+                valid_actions = env.get_valid_actions()
+
+                if action in valid_actions[0]:
+                    state, reward, done, info = env.step(action)
+                    debug_print(env, reward)
 
                 if done:
                     handle_game_end()
 
-            clock.tick(60)
 
 
 

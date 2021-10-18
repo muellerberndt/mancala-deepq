@@ -11,7 +11,7 @@ class InvalidActionError(Exception):
 class InvalidCoordinatesError(Exception):
     pass
 
-PIXEL_WIDTH = 150
+PIXEL_WIDTH = 70
 INVALID_ACTION_REWARD = -10
 WINNER_REWARD = 100
 
@@ -287,6 +287,22 @@ class MancalaEnv(gym.Env):
                               PIXEL_WIDTH])
 
             self.screen.blit(textsurface, (pos_x + PIXEL_WIDTH / 2, pos_y + PIXEL_WIDTH / 2))
+
+    def indicate_action_on_screen(self, action):
+
+        pos_y = (PIXEL_WIDTH * MARGIN) * 3 if self.active_player == 1 else PIXEL_WIDTH * MARGIN
+        pos_x = PIXEL_WIDTH * MARGIN + (PIXEL_WIDTH * MARGIN) * action
+
+        pygame.draw.rect(self.screen,
+                         RED,
+                         [pos_x,
+                          pos_y,
+                          PIXEL_WIDTH,
+                          PIXEL_WIDTH],
+                         3)
+
+        pygame.display.flip()
+
 
     def render(self, mode="human"):
 
