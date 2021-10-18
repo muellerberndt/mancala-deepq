@@ -80,7 +80,9 @@ class MancalaAgentModel(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
-        return torch.mul(x, action_mask)
+        result = torch.sub(x, action_mask)
+
+        return result
 
 
 Experience = NamedTuple(

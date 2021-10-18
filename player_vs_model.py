@@ -4,7 +4,7 @@ import pygame
 from pygame.locals import MOUSEBUTTONDOWN, QUIT
 import torch
 
-from gymenv import MancalaEnv, InvalidActionError, InvalidCoordinatesError
+from gymenv import MancalaEnv, InvalidCoordinatesError
 from deepq import MancalaAgentModel
 
 model_fn = sys.argv[1] if len(sys.argv) > 1 else os.path.join("save", "policy")
@@ -75,9 +75,9 @@ while 1:
 
         # Create action mask
 
-        action_mask = torch.empty(6, dtype=torch.float).fill_(-float('inf'))
+        action_mask = torch.empty(6, dtype=torch.float).fill_(float("inf"),)
         valid_actions = env.get_valid_actions()
-        action_mask[tuple(valid_actions)] = 1.
+        action_mask[tuple(valid_actions)] = 0.
         action_mask = action_mask.unsqueeze(0)
 
         input_t = torch.FloatTensor(state[2]).unsqueeze(0).to(device)
