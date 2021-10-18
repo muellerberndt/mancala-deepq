@@ -12,6 +12,7 @@ class InvalidCoordinatesError(Exception):
     pass
 
 PIXEL_WIDTH = 150
+INVALID_ACTION_REWARD = -10
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
@@ -135,7 +136,6 @@ class MancalaEnv(gym.Env):
         '''
         Return the player's current score. Argument is 1 (player 1) or 2 (player 2).
         '''
-
         return self.state[7] if player == 1 else self.state[0]
 
     def step(self, action) -> Tuple:
@@ -145,7 +145,13 @@ class MancalaEnv(gym.Env):
         player = self.active_player + 1
         initial_score = self.get_player_score(player)
 
-        self.do_action(action)
+        # End the game and return a negative reward if an invalid action is selected
+
+        try:
+            self.do_action(action)
+        except InvalidActionError:
+            print("Game ended due to invalid action.")
+            return self.get_observation(), INVALID_ACTION_REWARD, True, {}
 
         '''
         Check whether the game has ended.
@@ -175,8 +181,6 @@ class MancalaEnv(gym.Env):
 
         reward = self.get_player_score(player) - initial_score
 
-        print("Reward: {}".format(reward))
-
         return self.get_observation(), reward, done, {}
 
     def state_view_p2(self) -> np.array:
@@ -191,10 +195,17 @@ class MancalaEnv(gym.Env):
 
     def get_observation(self) -> np.array:
 
+        if self.active_player == 0:
+            valid_actions = np.where(self.state[1:7] != 0)
+        else:
+            actions = self.state_view_p2()[1:7]
+            valid_actions = np.where(actions != 0)
+
         return (
             self.active_player,
             np.copy(self.state),
-            np.copy(self.state_view_p2())
+            np.copy(self.state_view_p2()),
+            valid_actions
         )
 
     def reset(self):

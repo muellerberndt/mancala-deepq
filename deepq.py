@@ -76,11 +76,11 @@ class MancalaAgentModel(nn.Module):
         self.fc1 = nn.Linear(14, 512)
         self.fc2 = nn.Linear(512, 6)
 
-    def forward(self, x):
+    def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
-        return x
+        return torch.mul(x, action_mask)
 
 
 Experience = NamedTuple(

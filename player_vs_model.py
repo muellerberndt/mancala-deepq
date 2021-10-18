@@ -48,6 +48,22 @@ state = env.reset()
 
 clock = pygame.time.Clock()
 
+
+def debug_print(env, state):
+    print("Next active player: {}\nValid_actions: {}]\nPlayer 1 score: {}\nPlayer 2 score: {}\n\n".format(
+        env.get_active_player(),
+        state[3],
+        env.get_player_score(1),
+        env.get_player_score(2)
+    ))
+
+def handle_game_end(done: bool):
+    if done:
+        print("Game has ended.")
+        env.reset()
+
+action_mask = torch.ones(6, dtype=torch.float).unsqueeze(0)
+
 while 1:
 
     env.render()
@@ -56,15 +72,14 @@ while 1:
 
         input_t = torch.FloatTensor(state[2]).unsqueeze(0).to(device)
 
-        values = policy_net(input_t).to(device)
+        values = policy_net(input_t, action_mask).to(device)
 
         action = torch.argmax(values)
 
-        try:
-            state, reward, done, info = env.step(action)
-        except InvalidActionError:
-            print("Invalid action selected, resetting environment")
-            env.reset()
+        state, reward, done, info = env.step(action)
+        debug_print(env, state)
+
+        handle_game_end(done)
 
     else:
         for event in pygame.event.get():
@@ -78,16 +93,13 @@ while 1:
                 except InvalidCoordinatesError:
                     continue
 
-                try:
-                    state, reward, done, info = env.step(action)
-                except InvalidActionError:
-                    print("Action is invalid")
+                state, reward, done, info = env.step(action)
+                debug_print(env, state)
 
-                print("Next active player: {}\nPlayer 1 score: {}\nPlayer 2 score: {}".format(
-                    env.get_active_player(),
-                    env.get_player_score(1),
-                    env.get_player_score(2)
-                ))
+                handle_game_end(done)
+
+
+
 
             clock.tick(60)
 
