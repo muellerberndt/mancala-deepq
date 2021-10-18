@@ -110,8 +110,6 @@ class MancalaEnv(gym.Env):
 
             if self.state[opposite_index] > 0:
 
-                print("Opposite field has {} stones".format(self.state[opposite_index]))
-
                 if self.active_player == 0 and ptr < 7:
                     self.state[7] += self.state[opposite_index] + 1
                     self.state[ptr] = self.state[opposite_index] = 0
