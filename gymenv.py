@@ -195,19 +195,20 @@ class MancalaEnv(gym.Env):
 
         return view_p2
 
-    def get_observation(self) -> np.array:
+    def get_valid_actions(self) -> np.array:
 
         if self.active_player == 0:
-            valid_actions = np.where(self.state[1:7] != 0)
+            return np.where(self.state[1:7] != 0)
         else:
             actions = self.state_view_p2()[1:7]
-            valid_actions = np.where(actions != 0)
+            return np.where(actions != 0)
+
+    def get_observation(self) -> np.array:
 
         return (
             self.active_player,
             np.copy(self.state),
             np.copy(self.state_view_p2()),
-            valid_actions
         )
 
     def reset(self):
