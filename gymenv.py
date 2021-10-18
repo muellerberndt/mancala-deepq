@@ -13,6 +13,7 @@ class InvalidCoordinatesError(Exception):
 
 PIXEL_WIDTH = 150
 INVALID_ACTION_REWARD = -10
+WINNER_REWARD = 100
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
@@ -159,9 +160,6 @@ class MancalaEnv(gym.Env):
         All remaining stones go to the player who made the last move.
         '''
 
-        print("Number of stones in player 1's fields: {}".format(np.sum(self.state[1:7])))
-        print("Number of stones in player 2's fields: {}".format(np.sum(self.state[8:14])))
-
         if np.sum(self.state[1:7]) == 0:
             # Player 1 is done
 
@@ -179,7 +177,11 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-        reward = self.get_player_score(player) - initial_score
+        if done:
+            if (self.get_player_score(self.active_player) == max(self.state[0], self.state[7])):
+                reward = self.get_player_score(player) - initial_score + WINNER_REWARD
+        else:
+            reward = self.get_player_score(player) - initial_score
 
         return self.get_observation(), reward, done, {}
 

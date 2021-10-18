@@ -49,18 +49,21 @@ state = env.reset()
 clock = pygame.time.Clock()
 
 
-def debug_print(env, state):
-    print("Next active player: {}\nValid_actions: {}]\nPlayer 1 score: {}\nPlayer 2 score: {}\n\n".format(
+def debug_print(env, state, reward):
+    print("Last reward: {}, Next active player: {}\nValid_actions: {}]\nPlayer 1 score: {}\nPlayer 2 score: {}\n\n".format(
+        reward,
         env.get_active_player(),
         state[3],
         env.get_player_score(1),
         env.get_player_score(2)
     ))
 
-def handle_game_end(done: bool):
+
+def handle_game_end():
     if done:
         print("Game has ended.")
         env.reset()
+
 
 action_mask = torch.ones(6, dtype=torch.float).unsqueeze(0)
 
@@ -77,9 +80,10 @@ while 1:
         action = torch.argmax(values)
 
         state, reward, done, info = env.step(action)
-        debug_print(env, state)
+        debug_print(env, state, reward)
 
-        handle_game_end(done)
+        if done:
+            handle_game_end()
 
     else:
         for event in pygame.event.get():
@@ -94,12 +98,10 @@ while 1:
                     continue
 
                 state, reward, done, info = env.step(action)
-                debug_print(env, state)
+                debug_print(env, state, reward)
 
-                handle_game_end(done)
-
-
-
+                if done:
+                    handle_game_end()
 
             clock.tick(60)
 
