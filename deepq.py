@@ -66,7 +66,7 @@ else:
     KERNEL_SIZE = 2
     STRIDE = 1
 
-ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 14))
+ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6))
 
 
 class MancalaAgentModel(nn.Module):
