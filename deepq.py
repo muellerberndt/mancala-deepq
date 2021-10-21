@@ -21,8 +21,7 @@ MODEL_SAVE_DIR = 'save'
 
 class ScaledFloatFrame(gym.ObservationWrapper):
     def observation(self, obs):
-        return np.array(obs).astype(np.float32) / float(obs.max())
-
+        return np.array(obs).astype(np.float32) / 72.
 
 if torch.cuda.is_available():
 
@@ -202,7 +201,7 @@ if __name__ == '__main__':
     # os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
     # os.environ['SDL_VIDEO_CENTERED'] = '0'
 
-    env = ScaledFloatFrame(MancalaEnv( has_screen=False))
+    env = ScaledFloatFrame(MancalaEnv(has_screen=False))
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
     agent = Agent(strategy, 4, device)
     memory = ReplayMem(MEMORY_SIZE)
@@ -259,7 +258,7 @@ if __name__ == '__main__':
                 memory.push(Experience(state, action, next_state, reward))
             else:
                 # Return zero state when episode ends
-                memory.push(Experience(state, action, np.zeros(world_shape), reward))
+                memory.push(Experience(state, action, np.zeros(14), reward))
 
             ep_reward += reward
 
