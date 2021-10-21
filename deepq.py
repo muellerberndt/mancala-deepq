@@ -66,6 +66,8 @@ else:
     KERNEL_SIZE = 2
     STRIDE = 1
 
+ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 14))
+
 
 class MancalaAgentModel(nn.Module):
 
@@ -111,6 +113,7 @@ class ReplayMem:
         else:
             self.memory[self.push_count % self.capacity] = experience
         self.push_count += 1
+
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
@@ -148,23 +151,24 @@ class Agent:
     def select_action(self, state, policy_net):
         rate = self.get_exploration_rate()
         self.current_step += 1
+        action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
 
-        if rate > random.random():
+        if rate < random.random():
             return random.randrange(self.num_actions)
         else:
             with torch.no_grad():
-                input_t = torch.DoubleTensor(state).unsqueeze(0).unsqueeze(0).to(device)
+                input_t = torch.FloatTensor(state).unsqueeze(0).unsqueeze(0).to(device)
 
-                values = policy_net(input_t).to(self.device)
+                values = policy_net(input_t, action_mask).to(self.device)
 
-                return values.argmax(dim=1)
+                return torch.argmax(values).item()
 
 
 class QValues:
 
     @staticmethod
     def get_current(policy_net, states, actions):
-        return policy_net(states).gather(dim=1, index=actions.unsqueeze(-1))
+        return policy_net(states, ZEROED_ACTION_MASK).gather(dim=1, index=actions.unsqueeze(-1))
 
     @staticmethod
     def get_next(target_net, next_states, device):
@@ -178,7 +182,7 @@ class QValues:
         non_final_states = next_states[non_final_state_locations]
         batch_size = next_states.shape[0]
         values = torch.zeros(batch_size).to(device)
-        values[non_final_state_locations] = target_net(non_final_states).max(dim=1)[0].detach()
+        values[non_final_state_locations] = target_net(non_final_states, ZEROED_ACTION_MASK).max(dim=1)[0].detach()
         return values
 
 
@@ -186,10 +190,10 @@ def extract_tensors(experiences):
     # Convert batch of Experiences to Experience of batches
     batch = Experience(*zip(*experiences))
 
-    t1 = torch.DoubleTensor(batch.state).reshape(BATCH_SIZE, 1, WORLD_SQUARE_LEN, WORLD_SQUARE_LEN).to(device)
+    t1 = torch.FloatTensor(batch.state).reshape(BATCH_SIZE, 1, 14).to(device)
     t2 = torch.LongTensor(batch.action).to(device)
     t3 = torch.LongTensor(batch.reward).to(device)
-    t4 = torch.DoubleTensor(batch.next_state).reshape(BATCH_SIZE, 1, WORLD_SQUARE_LEN, WORLD_SQUARE_LEN).to(device)
+    t4 = torch.FloatTensor(batch.next_state).reshape(BATCH_SIZE, 1, 14).to(device)
 
     return t1, t2, t3, t4
 
@@ -201,7 +205,9 @@ if __name__ == '__main__':
     # os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
     # os.environ['SDL_VIDEO_CENTERED'] = '0'
 
-    env = ScaledFloatFrame(MancalaEnv(has_screen=False))
+    # env = ScaledFloatFrame(MancalaEnv(has_screen=False))
+    env = MancalaEnv(has_screen=False)
+
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
     agent = Agent(strategy, 4, device)
     memory = ReplayMem(MEMORY_SIZE)
@@ -237,7 +243,7 @@ if __name__ == '__main__':
         n_episodes += 1
         ep_reward = 0
 
-        saved_step = agent.get_current_step()
+        # saved_step = agent.get_current_step()
 
         for timestep in count():
 

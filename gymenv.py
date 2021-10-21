@@ -82,10 +82,15 @@ class MancalaEnv(gym.Env):
             index = action + 1
         else:
             index = 8 + action
-        
+
+        assert isinstance(self.state[0], numpy.int64)
+
+        print(type(action))
+        assert isinstance(action, int)
+
         n_stones = self.state[index]
 
-        print("[ENV] Selected field: {}\n[ENV] Number of stones in selected field: {}\n".format(index, n_stones))
+        # print("[ENV] Selected field: {}\n[ENV] Number of stones in selected field: {}\n".format(index, n_stones))
 
         if n_stones == 0:
             raise InvalidActionError
@@ -185,6 +190,7 @@ class MancalaEnv(gym.Env):
 
         return self.get_observation(), reward, done, {}
 
+
     def state_view_p2(self) -> np.array:
         """Returns a view of the state
         from the perspective of player 2 (basically
@@ -216,9 +222,12 @@ class MancalaEnv(gym.Env):
     def get_observation(self) -> np.array:
 
         if self.active_player == 0:
-            return np.copy(self.state)
+            state_copy = np.copy(self.state)
         else:
-            return np.copy(self.state_view_p2()),
+            p2 = self.state_view_p2()
+            state_copy = np.copy(p2)
+
+        return state_copy
 
     def reset(self):
         self.state = np.zeros((14,), dtype=np.long)
