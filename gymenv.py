@@ -126,22 +126,22 @@ class MancalaEnv(gym.Env):
 
     def get_active_player(self) -> int:
         '''
-        Return the player who has the next move. Return value is 1 (player 1) or 2 (player 2).
+        Return the player who has the next move. Return value is 0 (player 1) or 1 (player 2).
         '''
 
-        return self.active_player + 1
+        return self.active_player
 
     def get_player_score(self, player: int) -> int:
         '''
-        Return the player's current score. Argument is 1 (player 1) or 2 (player 2).
+        Return the player's current score. Argument is 0 (player 1) or 1 (player 2).
         '''
-        return self.state[7] if player == 1 else self.state[0]
+        return self.state[7] if player == 0 else self.state[0]
 
     def step(self, action) -> Tuple:
 
         done = False
 
-        player = self.active_player + 1
+        player = self.active_player
         initial_score = self.get_player_score(player)
 
         # End the game and return a negative reward if an invalid action is selected
@@ -203,6 +203,7 @@ class MancalaEnv(gym.Env):
             actions = self.state_view_p2()[1:7]
             return np.where(actions != 0)
 
+    '''
     def get_observation(self) -> np.array:
 
         return (
@@ -210,6 +211,14 @@ class MancalaEnv(gym.Env):
             np.copy(self.state),
             np.copy(self.state_view_p2()),
         )
+    '''
+
+    def get_observation(self) -> np.array:
+
+        if self.active_player == 0:
+            return np.copy(self.state)
+        else:
+            return np.copy(self.state_view_p2()),
 
     def reset(self):
         self.state = np.zeros((14,), dtype=np.long)
