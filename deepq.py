@@ -256,9 +256,10 @@ if __name__ == '__main__':
                 action = agent.select_action(state, policy_net)
                 next_state, reward, done, info = env.step(action)
             else:
-                action = agent.select_action(MancalaEnv.shift_view_p2(state))
+                p2_view = MancalaEnv.shift_view_p2(state)
+                action = agent.select_action(p2_view, policy_net)
                 next_state, reward, done, info = env.step(action)
-                next_state = MancalaEnv.shift_view_p2(state)
+                next_state = MancalaEnv.shift_view_p2(next_state)
 
             if not done:
                 memory.push(Experience(state, action, next_state, reward))

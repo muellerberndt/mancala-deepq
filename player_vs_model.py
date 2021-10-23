@@ -80,7 +80,9 @@ while 1:
         action_mask[tuple(valid_actions)] = 0.
         action_mask = action_mask.unsqueeze(0)
 
-        input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
+        p2_view = MancalaEnv.shift_view_p2(state)
+
+        input_t = torch.FloatTensor(p2_view).unsqueeze(0).to(device)
 
         values = policy_net(input_t, action_mask).to(device)
 
@@ -90,10 +92,9 @@ while 1:
         env.indicate_action_on_screen(action)
         time.sleep(0.75)
 
-        initial_state = MancalaEnv.shift_view_p2(env.state.copy())
         state, reward, done, info = env.step(action)
 
-        debug_print("AI", initial_state, env, action, reward)
+        debug_print("AI", p2_view, env, action, reward)
 
         if done:
             handle_game_end()
