@@ -51,10 +51,11 @@ else:
     BATCH_SIZE = 2048
     GAMMA = 0.98
     EPS_START = 1
+    EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.00001
     MEMORY_SIZE = 2000000
-    LR = 0.0001
+    LR = 0.00005
     UPDATE_TARGET = 2500
 
 
