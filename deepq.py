@@ -158,7 +158,7 @@ class Agent:
             return random.randrange(self.num_actions)
         else:
             with torch.no_grad():
-                input_t = torch.FloatTensor(state).unsqueeze(0).unsqueeze(0).to(device)
+                input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
 
                 values = policy_net(input_t, action_mask).to(self.device)
 
@@ -169,7 +169,9 @@ class QValues:
 
     @staticmethod
     def get_current(policy_net, states, actions):
-        return policy_net(states, ZEROED_ACTION_MASK).gather(dim=1, index=actions.unsqueeze(-1))
+        _actions = actions.unsqueeze(-1)
+        result = policy_net(states, ZEROED_ACTION_MASK)
+        return result.gather(dim=1, index=_actions)
 
     @staticmethod
     def get_next(target_net, next_states, device):
@@ -183,7 +185,8 @@ class QValues:
         non_final_states = next_states[non_final_state_locations]
         batch_size = next_states.shape[0]
         values = torch.zeros(batch_size).to(device)
-        values[non_final_state_locations] = target_net(non_final_states, ZEROED_ACTION_MASK).max(dim=1)[0].detach()
+        action_mask = torch.zeros(non_final_states.shape[0], 6).to(device)
+        values[non_final_state_locations] = target_net(non_final_states, action_mask).max(dim=1)[0].detach()
         return values
 
 
@@ -191,22 +194,16 @@ def extract_tensors(experiences):
     # Convert batch of Experiences to Experience of batches
     batch = Experience(*zip(*experiences))
 
-    t1 = torch.FloatTensor(batch.state).reshape(BATCH_SIZE, 1, 14).to(device)
+    t1 = torch.FloatTensor(batch.state).reshape(BATCH_SIZE, 14).to(device)
     t2 = torch.LongTensor(batch.action).to(device)
     t3 = torch.LongTensor(batch.reward).to(device)
-    t4 = torch.FloatTensor(batch.next_state).reshape(BATCH_SIZE, 1, 14).to(device)
+    t4 = torch.FloatTensor(batch.next_state).reshape(BATCH_SIZE, 14).to(device)
 
     return t1, t2, t3, t4
 
 
 if __name__ == '__main__':
 
-    # torch.set_default_dtype(torch.double)
-
-    # os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
-    # os.environ['SDL_VIDEO_CENTERED'] = '0'
-
-    # env = ScaledFloatFrame(MancalaEnv(has_screen=False))
     env = MancalaEnv(has_screen=False)
 
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
@@ -256,8 +253,8 @@ if __name__ == '__main__':
                 action = agent.select_action(state, policy_net)
                 next_state, reward, done, info = env.step(action)
             else:
-                p2_view = MancalaEnv.shift_view_p2(state)
-                action = agent.select_action(p2_view, policy_net)
+                state = MancalaEnv.shift_view_p2(state)
+                action = agent.select_action(state, policy_net)
                 next_state, reward, done, info = env.step(action)
                 next_state = MancalaEnv.shift_view_p2(next_state)
 
