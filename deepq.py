@@ -2,7 +2,6 @@ import os
 import gym
 import math
 from itertools import count
-from gymenv import MancalaEnv
 
 import random
 from typing import List, NamedTuple
@@ -15,6 +14,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
+
+from gymenv import MancalaEnv
+from agent import Agent
 
 model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 20
@@ -125,24 +127,18 @@ class EpsilonGreedyStrategy:
         return self.end + (self.start - self.end) * math.exp(-1. * current_step * self.decay)
 
 
-class Agent:
+class DeepQAgent(Agent):
     def __init__(self, strategy, device):
-        self.current_step = 0
+        super().__init__()
         self.strategy = strategy
         self.device = device
 
     def get_exploration_rate(self):
         return self.strategy.get_exploration_rate(self.current_step)
 
-    def get_current_step(self):
-        return self.current_step
-
-    def reset_current_step(self, step):
-        self.current_step = step
-
     def select_action(self, state, policy_net, valid_actions):
+        super().select_action(state, valid_actions)
         rate = self.get_exploration_rate()
-        self.current_step += 1
         action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
 
         if rate > random.random():
@@ -202,7 +198,7 @@ if __name__ == '__main__':
 
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
 
-    agent = Agent(strategy, device)
+    agent = DeepQAgent(strategy, device)
 
     memory = ReplayMem(MEMORY_SIZE)
 
