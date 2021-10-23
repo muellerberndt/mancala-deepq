@@ -16,7 +16,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-MODEL_SAVE_DIR = 'save'
+model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 20
 
 
@@ -33,7 +33,7 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 2048
+    BATCH_SIZE = 4096
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.25
@@ -49,13 +49,13 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 2048
+    BATCH_SIZE = 4096
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.00001
     MEMORY_SIZE = 2000000
-    LR = 0.000001
+    LR = 0.0000001
     UPDATE_TARGET = 2500
 
 
@@ -126,10 +126,9 @@ class EpsilonGreedyStrategy:
 
 
 class Agent:
-    def __init__(self, strategy, num_actions, device):
+    def __init__(self, strategy, device):
         self.current_step = 0
         self.strategy = strategy
-        self.num_actions = num_actions
         self.device = device
 
     def get_exploration_rate(self):
@@ -203,12 +202,17 @@ if __name__ == '__main__':
 
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
 
-    agent = Agent(strategy, 4, device)
+    agent = Agent(strategy, device)
 
     memory = ReplayMem(MEMORY_SIZE)
 
-    policy_net = MancalaAgentModel().to(device)
-    target_net = MancalaAgentModel().to(device)
+    if os.path.isfile(model_fn):
+        print("Resuming from checkpoint: {} ...".format(model_fn))
+        policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+        target_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+    else:
+        policy_net = MancalaAgentModel().to(device)
+        target_net = MancalaAgentModel().to(device)
 
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
@@ -276,11 +280,9 @@ if __name__ == '__main__':
                     print("Updating target net & saving checkpoint...")
                     target_net.load_state_dict(policy_net.state_dict())
 
-                    fn = os.path.join(os.getcwd(), MODEL_SAVE_DIR, "policy")
-
-                    if os.path.isfile(fn):
-                        os.remove(fn)
-                    torch.save(policy_net, fn)
+                    if os.path.isfile(model_fn):
+                        os.remove(model_fn)
+                    torch.save(policy_net, model_fn)
 
                 if n_batches_total > 0 and n_batches_total % 200 == 0:
                     print("Total batches trained: {}, replay mem size: {}".format(
