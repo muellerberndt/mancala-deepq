@@ -51,13 +51,10 @@ else:
     device = torch.device('cpu')
 
 
-''' 
-TODO: Load the trained policy net
 policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
 policy_net.eval()
-'''
 
-policy_net = MancalaAgentModel()
+# policy_net = MancalaAgentModel()
 
 env = MancalaEnv(has_screen=True)
 state = env.reset()
