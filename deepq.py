@@ -51,7 +51,6 @@ else:
     BATCH_SIZE = 2048
     GAMMA = 0.98
     EPS_START = 1
-    EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.00001
     MEMORY_SIZE = 2000000
@@ -147,14 +146,17 @@ class Agent:
         action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
 
         if rate > random.random():
-            return np.random.choice(valid_actions)
+            if len(valid_actions) == 0:
+                return np.int64(0)
+            else:
+                return np.random.choice(valid_actions)
         else:
             with torch.no_grad():
                 input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
 
                 values = policy_net(input_t, action_mask).to(self.device)
 
-                return torch.argmax(values).item()
+                return np.int64(torch.argmax(values).item())
 
 
 class QValues:
