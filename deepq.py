@@ -32,19 +32,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 256
-    GAMMA = 0.9
+    BATCH_SIZE = 2048
+    GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.25
-    EPS_DECAY = 0.000001
+    EPS_DECAY = 0.000005
     MEMORY_SIZE = 5000000
-    REWARD_GOAL = 1000
     LR = 0.00001
-    TOTAL_STEPS = 100000000000
-    UPDATE_TARGET = 1000
-
-    KERNEL_SIZE = 3
-    STRIDE = 1
+    UPDATE_TARGET = 2500
 
 else:
     # CPU Config
@@ -53,19 +48,15 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 128
-    GAMMA = 0.9
+    BATCH_SIZE = 2048
+    GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
-    EPS_DECAY = 0.0001
+    EPS_DECAY = 0.00001
     MEMORY_SIZE = 2000000
-    REWARD_GOAL = 1000
-    LR = 0.00001
-    TOTAL_STEPS = 100000000000
-    UPDATE_TARGET = 1000
+    LR = 0.0001
+    UPDATE_TARGET = 2500
 
-    KERNEL_SIZE = 2
-    STRIDE = 1
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6))
 
@@ -296,7 +287,13 @@ if __name__ == '__main__':
                         os.remove(fn)
                     torch.save(policy_net, fn)
 
-                if step > 0 and step % 100 == 0:
+                if step > 0 and step % 200 == 0:
+                    print("Step: {}, replay mem size: {}, total batches trained: {}".format(
+                        step,
+                        len(memory),
+                        n_batches_trained
+                        )
+                    )
                     print("Avg. loss for training period: {}, "
                           "Agent exploration rate: {}".format(
                         total_loss / steps,
@@ -307,13 +304,15 @@ if __name__ == '__main__':
                     total_loss = 0
                     steps = 0
 
-            if done or ep_reward >= REWARD_GOAL:
+            if done and n_episodes % 10 == 0:
 
+                '''
                 print("Episode {} completed, steps: {}, reward: {}".format(
                     n_episodes,
                     timestep,
                     ep_reward
                 ))
+                '''
 
                 print("Total training iterations: {}, replay mem size: {}".format(n_batches_trained, len(memory)))
 

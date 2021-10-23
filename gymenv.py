@@ -153,7 +153,7 @@ class MancalaEnv(gym.Env):
         try:
             self.do_action(action)
         except InvalidActionError:
-            print("Game ended due to invalid action.")
+            # print("Game ended due to invalid action.")
             return self.get_observation(), INVALID_ACTION_REWARD, True, {}
 
         '''
