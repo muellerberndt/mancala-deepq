@@ -7,7 +7,9 @@ import torch
 import numpy as np
 
 from gymenv import MancalaEnv, InvalidCoordinatesError
-from deepq import MancalaAgentModel
+from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
+
+model_fn = os.path.join("save", "policy")
 
 
 def debug_print(player, initial_state, env, action, reward):
@@ -51,17 +53,19 @@ else:
     device = torch.device('cpu')
 
 
-policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
-policy_net.eval()
-
-# policy_net = MancalaAgentModel()
-
 env = MancalaEnv(has_screen=True)
+
+if model_fn is not None and os.path.isfile(model_fn):
+    print("Loading model: {} ...".format(model_fn))
+    policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+else:
+    policy_net = MancalaAgentModel().to(device)
+
+agent = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+
 state = env.reset()
 
 done = False
-
-reward_earned = 0
 
 clock = pygame.time.Clock()
 
@@ -80,11 +84,9 @@ while 1:
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
-        input_t = torch.FloatTensor(p2_view).unsqueeze(0).to(device)
+        # input_t = torch.FloatTensor(p2_view).unsqueeze(0).to(device)
 
-        values = policy_net(input_t, action_mask).to(device)
-
-        action = np.int64(torch.argmax(values).item())
+        action = agent.select_action(p2_view, valid_actions)
 
         time.sleep(0.25)
         env.indicate_action_on_screen(action)

@@ -127,16 +127,27 @@ class EpsilonGreedyStrategy:
         return self.end + (self.start - self.end) * math.exp(-1. * current_step * self.decay)
 
 
+class MaxQStrategy:
+    def get_exploration_rate(self, current_step):
+        return 0
+
+
 class DeepQAgent(Agent):
-    def __init__(self, strategy, device):
+    def __init__(self, strategy, device, policy_net = None):
         super().__init__()
+
         self.strategy = strategy
         self.device = device
+
+        if policy_net is not None:
+            self.policy_net = policy_net
+        else:
+            self.policy_net = MancalaAgentModel().to(device)
 
     def get_exploration_rate(self):
         return self.strategy.get_exploration_rate(self.current_step)
 
-    def select_action(self, state, policy_net, valid_actions):
+    def select_action(self, state, valid_actions):
         super().select_action(state, valid_actions)
         rate = self.get_exploration_rate()
         action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
@@ -150,7 +161,7 @@ class DeepQAgent(Agent):
             with torch.no_grad():
                 input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
 
-                values = policy_net(input_t, action_mask).to(self.device)
+                values = self.policy_net(input_t, action_mask).to(self.device)
 
                 return np.int64(torch.argmax(values).item())
 
@@ -198,18 +209,18 @@ if __name__ == '__main__':
 
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
 
-    agent = DeepQAgent(strategy, device)
+    if model_fn is not None and os.path.isfile(model_fn):
+        print("Resuming from checkpoint: {} ...".format(model_fn))
+        policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+    else:
+        policy_net = MancalaAgentModel().to(device)
+
+    agent = DeepQAgent(strategy, device, policy_net)
+    policy_net = agent.policy_net
 
     memory = ReplayMem(MEMORY_SIZE)
 
-    if os.path.isfile(model_fn):
-        print("Resuming from checkpoint: {} ...".format(model_fn))
-        policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
-        target_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
-    else:
-        policy_net = MancalaAgentModel().to(device)
-        target_net = MancalaAgentModel().to(device)
-
+    target_net = MancalaAgentModel().to(device)
     target_net.load_state_dict(policy_net.state_dict())
     target_net.eval()
 
@@ -236,11 +247,11 @@ if __name__ == '__main__':
             valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
-                action = agent.select_action(state, policy_net, valid_actions)
+                action = agent.select_action(state, valid_actions)
                 next_state, reward, done, info = env.step(action)
             else:
                 state = MancalaEnv.shift_view_p2(state)
-                action = agent.select_action(state, policy_net, valid_actions)
+                action = agent.select_action(state, valid_actions)
                 next_state, reward, done, info = env.step(action)
                 next_state = MancalaEnv.shift_view_p2(next_state)
 
@@ -315,6 +326,3 @@ if __name__ == '__main__':
                     writer.flush()
 
                 break
-
-
-
