@@ -85,7 +85,6 @@ class MancalaEnv(gym.Env):
 
         assert isinstance(self.state[0], numpy.int64)
 
-        print(type(action))
         assert isinstance(action, int)
 
         n_stones = self.state[index]

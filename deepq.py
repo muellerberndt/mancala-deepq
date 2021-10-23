@@ -153,7 +153,7 @@ class Agent:
         self.current_step += 1
         action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
 
-        if rate < random.random():
+        if rate > random.random():
             return random.randrange(self.num_actions)
         else:
             with torch.no_grad():
