@@ -180,7 +180,7 @@ class MancalaEnv(gym.Env):
             done = True
 
         if done:
-            if (self.get_player_score(self.active_player) == max(self.state[0], self.state[7])):
+            if self.get_player_score(self.active_player) == max(self.state[0], self.state[7]):
                 reward = self.get_player_score(player) - initial_score + WINNER_REWARD
             else:
                 reward = 0
@@ -189,44 +189,16 @@ class MancalaEnv(gym.Env):
 
         return self.get_observation(), reward, done, {}
 
-
-    def state_view_p2(self) -> np.array:
-        """Returns a view of the state
-        from the perspective of player 2 (basically
-        shift the state array by half)
-        """
-
-        view_p2 = numpy.append(self.state[7:14], self.state[0:7])
-
-        return view_p2
-
     def get_valid_actions(self) -> np.array:
 
         if self.active_player == 0:
             return np.where(self.state[1:7] != 0)
         else:
-            actions = self.state_view_p2()[1:7]
-            return np.where(actions != 0)
-
-    '''
-    def get_observation(self) -> np.array:
-
-        return (
-            self.active_player,
-            np.copy(self.state),
-            np.copy(self.state_view_p2()),
-        )
-    '''
+            p2_view = self.shift_view_p2(self.state)[1:7]
+            return np.where(p2_view != 0)
 
     def get_observation(self) -> np.array:
-
-        if self.active_player == 0:
-            state_copy = np.copy(self.state)
-        else:
-            p2 = self.state_view_p2()
-            state_copy = np.copy(p2)
-
-        return state_copy
+        return np.copy(self.state)
 
     def reset(self):
         self.state = np.zeros((14,), dtype=np.long)
@@ -244,7 +216,7 @@ class MancalaEnv(gym.Env):
             state = self.state
             bg_color = WHITE if self.active_player == 0 else GRAY
         else:
-            state = self.state_view_p2()
+            state = self.shift_view_p2(self.state)
             bg_color = WHITE if self.active_player == 1 else GRAY
 
         offset_y = ((PIXEL_WIDTH + MARGIN) * 2 + 2) * player
@@ -346,3 +318,12 @@ class MancalaEnv(gym.Env):
             return math.floor(pos[0] / PIXEL_WIDTH) - 1
 
         raise InvalidCoordinatesError
+
+    @staticmethod
+    def shift_view_p2(state) -> np.array:
+        """Returns a view of the state
+        from the perspective of player 2 (basically
+        shift the state array by half)
+        """
+
+        return numpy.append(state[7:14], state[0:7])

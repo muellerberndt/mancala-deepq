@@ -23,6 +23,7 @@ class ScaledFloatFrame(gym.ObservationWrapper):
     def observation(self, obs):
         return np.array(obs).astype(np.float32) / 72.
 
+
 if torch.cuda.is_available():
 
     # GPU Config
@@ -209,7 +210,9 @@ if __name__ == '__main__':
     env = MancalaEnv(has_screen=False)
 
     strategy = EpsilonGreedyStrategy(EPS_START, EPS_END, EPS_DECAY)
+
     agent = Agent(strategy, 4, device)
+
     memory = ReplayMem(MEMORY_SIZE)
 
     policy_net = MancalaAgentModel().to(device)
@@ -249,16 +252,13 @@ if __name__ == '__main__':
 
             step += 1
 
-            # env.render()
-
-            # 0 = UP
-            # 1 = DOWN
-            # 2 = LEFT
-            # 3 =  RIGHT
-
-            action = agent.select_action(state, policy_net)
-
-            next_state, reward, done, info = env.step(action)
+            if env.active_player == 0:
+                action = agent.select_action(state, policy_net)
+                next_state, reward, done, info = env.step(action)
+            else:
+                action = agent.select_action(MancalaEnv.shift_view_p2(state))
+                next_state, reward, done, info = env.step(action)
+                next_state = MancalaEnv.shift_view_p2(state)
 
             if not done:
                 memory.push(Experience(state, action, next_state, reward))

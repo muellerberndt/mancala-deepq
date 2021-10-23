@@ -84,13 +84,13 @@ while 1:
 
         values = policy_net(input_t, action_mask).to(device)
 
-        action = torch.argmax(values)
+        action = torch.argmax(values).item()
 
         time.sleep(0.25)
         env.indicate_action_on_screen(action)
         time.sleep(0.75)
 
-        initial_state = env.state.copy()
+        initial_state = MancalaEnv.shift_view_p2(env.state.copy())
         state, reward, done, info = env.step(action)
 
         debug_print("AI", initial_state, env, action, reward)
