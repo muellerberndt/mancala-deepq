@@ -85,7 +85,7 @@ class MancalaEnv(gym.Env):
 
         assert isinstance(self.state[0], numpy.int64)
 
-        assert isinstance(action, int)
+        assert isinstance(action, numpy.int64)
 
         n_stones = self.state[index]
 
@@ -141,7 +141,7 @@ class MancalaEnv(gym.Env):
         '''
         return self.state[7] if player == 0 else self.state[0]
 
-    def step(self, action) -> Tuple:
+    def step(self, action: np.int64) -> np.array:
 
         done = False
 
@@ -192,10 +192,10 @@ class MancalaEnv(gym.Env):
     def get_valid_actions(self) -> np.array:
 
         if self.active_player == 0:
-            return np.where(self.state[1:7] != 0)
+            return np.where(self.state[1:7] != 0)[0]
         else:
             p2_view = self.shift_view_p2(self.state)[1:7]
-            return np.where(p2_view != 0)
+            return np.where(p2_view != 0)[0]
 
     def get_observation(self) -> np.array:
         return np.copy(self.state)
@@ -302,7 +302,7 @@ class MancalaEnv(gym.Env):
 
             pygame.display.flip()
 
-    def get_action_from_coords(self, pos: Tuple) -> int:
+    def get_action_from_coords(self, pos: Tuple) -> np.int64:
         '''
         Determine the field clicked by the player from pixel coordinates.
         Returns the state index selected if the coordinates are within the active player's
@@ -311,11 +311,11 @@ class MancalaEnv(gym.Env):
 
         if self.active_player == 0 and PIXEL_WIDTH < pos[1] < PIXEL_WIDTH * 2 \
                 and MARGIN + PIXEL_WIDTH < pos[0] < (MARGIN + PIXEL_WIDTH) * 7:
-            return math.floor(pos[0] / PIXEL_WIDTH) - 1
+            return np.int64(math.floor(pos[0] / PIXEL_WIDTH) - 1)
 
         if self.active_player == 1 and 3 * PIXEL_WIDTH < pos[1] < 4 * PIXEL_WIDTH \
                 and MARGIN + PIXEL_WIDTH < pos[0] < (MARGIN + PIXEL_WIDTH) * 7:
-            return math.floor(pos[0] / PIXEL_WIDTH) - 1
+            return np.int64(math.floor(pos[0] / PIXEL_WIDTH) - 1)
 
         raise InvalidCoordinatesError
 

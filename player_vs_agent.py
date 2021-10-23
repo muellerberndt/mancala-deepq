@@ -4,6 +4,7 @@ import time
 import pygame
 from pygame.locals import MOUSEBUTTONDOWN, QUIT
 import torch
+import numpy as np
 
 from gymenv import MancalaEnv, InvalidCoordinatesError
 from deepq import MancalaAgentModel
@@ -77,7 +78,7 @@ while 1:
 
         action_mask = torch.empty(6, dtype=torch.float).fill_(float("inf"),)
         valid_actions = env.get_valid_actions()
-        action_mask[tuple(valid_actions)] = 0.
+        action_mask[valid_actions] = 0.
         action_mask = action_mask.unsqueeze(0)
 
         p2_view = MancalaEnv.shift_view_p2(state)
@@ -86,7 +87,7 @@ while 1:
 
         values = policy_net(input_t, action_mask).to(device)
 
-        action = torch.argmax(values).item()
+        action = np.int64(torch.argmax(values).item())
 
         time.sleep(0.25)
         env.indicate_action_on_screen(action)
@@ -105,7 +106,6 @@ while 1:
             if event.type == QUIT:
                 pygame.quit()
             elif event.type == MOUSEBUTTONDOWN:
-
                 try:
                     action = env.get_action_from_coords(event.pos)
                 except InvalidCoordinatesError:
@@ -113,11 +113,10 @@ while 1:
 
                 valid_actions = env.get_valid_actions()
 
-                if action in valid_actions[0]:
+                if action in valid_actions:
                     initial_state = env.state.copy()
                     state, reward, done, info = env.step(action)
                     debug_print("Human", initial_state, env, action, reward)
 
                 if done:
                     handle_game_end()
-

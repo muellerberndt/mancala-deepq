@@ -55,7 +55,7 @@ else:
     EPS_END = 0.01
     EPS_DECAY = 0.00001
     MEMORY_SIZE = 2000000
-    LR = 0.00005
+    LR = 0.000001
     UPDATE_TARGET = 2500
 
 
@@ -141,13 +141,13 @@ class Agent:
     def reset_current_step(self, step):
         self.current_step = step
 
-    def select_action(self, state, policy_net):
+    def select_action(self, state, policy_net, valid_actions):
         rate = self.get_exploration_rate()
         self.current_step += 1
         action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
 
         if rate > random.random():
-            return random.randrange(self.num_actions)
+            return np.random.choice(valid_actions)
         else:
             with torch.no_grad():
                 input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
@@ -235,18 +235,17 @@ if __name__ == '__main__':
         n_episodes += 1
         ep_reward = 0
 
-        # saved_step = agent.get_current_step()
-
         for timestep in count():
 
             step += 1
+            valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
-                action = agent.select_action(state, policy_net)
+                action = agent.select_action(state, policy_net, valid_actions)
                 next_state, reward, done, info = env.step(action)
             else:
                 state = MancalaEnv.shift_view_p2(state)
-                action = agent.select_action(state, policy_net)
+                action = agent.select_action(state, policy_net, valid_actions)
                 next_state, reward, done, info = env.step(action)
                 next_state = MancalaEnv.shift_view_p2(next_state)
 
