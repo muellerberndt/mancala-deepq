@@ -17,6 +17,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 MODEL_SAVE_DIR = 'save'
+REPORTING_PERIOD = 20
 
 
 class ScaledFloatFrame(gym.ObservationWrapper):
@@ -216,19 +217,12 @@ if __name__ == '__main__':
 
     writer = SummaryWriter()
 
-    iteration = 1
-
-    n_batches_trained = 0
-
+    n_episodes = 0
     episode_durations = []
     episode_rewards = []
     total_loss = 0
-    step = 0
-    steps = 0
-
-    n_episodes = 0
-
-    experiences_gathered = 0
+    n_batches_total = 0
+    n_batches_this_period = 0
 
     while 1:
 
@@ -239,7 +233,6 @@ if __name__ == '__main__':
 
         for timestep in count():
 
-            step += 1
             valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
@@ -276,10 +269,10 @@ if __name__ == '__main__':
                 optimizer.step()
 
                 total_loss += loss
-                n_batches_trained += 1
-                steps += 1
+                n_batches_total += 1
+                n_batches_this_period += 1
 
-                if step % UPDATE_TARGET == 0:
+                if n_batches_total % UPDATE_TARGET == 0:
                     print("Updating target net & saving checkpoint...")
                     target_net.load_state_dict(policy_net.state_dict())
 
@@ -289,44 +282,41 @@ if __name__ == '__main__':
                         os.remove(fn)
                     torch.save(policy_net, fn)
 
-                if step > 0 and step % 200 == 0:
-                    print("Step: {}, replay mem size: {}, total batches trained: {}".format(
-                        step,
+                if n_batches_total > 0 and n_batches_total % 200 == 0:
+                    print("Total batches trained: {}, replay mem size: {}".format(
+                        n_batches_total,
                         len(memory),
-                        n_batches_trained
                         )
                     )
-                    print("Avg. loss for training period: {}, "
+                    print("Avg. loss for last training period: {}, "
                           "Agent exploration rate: {}".format(
-                        total_loss / steps,
+                        total_loss / n_batches_this_period,
                         agent.get_exploration_rate(),
                         )
                     )
 
                     total_loss = 0
-                    steps = 0
+                    n_batches_this_period = 0
 
-            if done and n_episodes % 10 == 0:
+            if done:
+                episode_durations.append(timestep)
+                episode_rewards.append(ep_reward)
 
-                '''
-                print("Episode {} completed, steps: {}, reward: {}".format(
-                    n_episodes,
-                    timestep,
-                    ep_reward
-                ))
-                '''
+                if n_episodes % REPORTING_PERIOD == 0:
 
-                print("Total training iterations: {}, replay mem size: {}".format(n_batches_trained, len(memory)))
+                    print("Episode {} completed, last {} episodes avg. duration: {}, avg. reward: {}".format(
+                        n_episodes,
+                        REPORTING_PERIOD,
+                        np.mean(episode_durations[-REPORTING_PERIOD:]),
+                        np.mean(episode_rewards[-REPORTING_PERIOD:])
+                    ))
 
-                writer.add_scalar("Episode durations", timestep, n_episodes)
-                writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
 
-                writer.flush()
+                    writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
+
+                    writer.flush()
 
                 break
 
-    print("Training goal reached")
-
-    env.close()
 
 
