@@ -84,10 +84,6 @@ class MancalaEnv(gym.Env):
         else:
             index = 8 + action
 
-        assert isinstance(self.state[0], numpy.int64)
-
-        assert isinstance(action, numpy.int64)
-
         state_copy = copy.copy(self.state)
         score = state_copy[0]
         n_stones = state_copy[index]
@@ -265,6 +261,11 @@ class MancalaEnv(gym.Env):
 
     def get_observation(self) -> np.array:
         return np.copy(self.state)
+
+    def create_state(self, state, player: int):
+        self.state = state
+        self.active_player = player
+        return self.get_observation()
 
     def reset(self):
         self.state = np.zeros((14,), dtype=np.long)
