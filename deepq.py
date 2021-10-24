@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     if model_fn is not None and os.path.isfile(model_fn):
         print("Resuming from checkpoint: {} ...".format(model_fn))
-        policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
+        policy_net = torch.load(os.path.join(os.getcwd(), model_fn))
     else:
         policy_net = MancalaAgentModel().to(device)
 
@@ -306,6 +306,14 @@ if __name__ == '__main__':
                         )
                     )
 
+                    if n_batches_total > 0 and n_batches_total % 800 == 0:
+
+                        writer.add_scalar("Loss", total_loss / n_batches_this_period, n_batches_total)
+                        writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_batches_total)
+                        writer.add_scalar("Episode duration", np.mean(episode_rewards[-10:]), n_batches_total)
+
+                        writer.flush()
+
                     total_loss = 0
                     n_batches_this_period = 0
 
@@ -321,9 +329,5 @@ if __name__ == '__main__':
                         np.mean(episode_durations[-REPORTING_PERIOD:]),
                         np.mean(episode_rewards[-REPORTING_PERIOD:])
                     ))
-
-                    writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
-
-                    writer.flush()
 
                 break
