@@ -53,8 +53,7 @@ else:
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
     LR = 0.000001
-    UPDATE_TARGET = 2500s
-
+    UPDATE_TARGET = 2500
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
 
