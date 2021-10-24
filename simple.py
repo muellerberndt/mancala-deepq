@@ -15,9 +15,16 @@ class MaxAgent(Agent):
         # Game should have ended already
         if len(valid_actions) == 0:
             return np.int64(0)
+        
+        # Get a score for all actions
+        available_scores = list(
+            map(lambda action:
+                env.simulate_action(action),
+                valid_actions))
+        
+        # Return the index of the first action with the highest score
+        return np.argmax(available_scores)
 
-        # simulate an action for all valid actions
-        # select the best action to play
 
 class AdvancedMaxAgent(Agent):
 
