@@ -7,8 +7,7 @@ class MaxAgent(Agent):
     def __init__(self):
         super().__init__()
 
-    def select_action(self, state, valid_actions) -> np.int64:
-        env = MancalaEnv(has_screen=False)
+    def select_action(self, state, valid_actions, env) -> np.int64:
         super().select_action(state, valid_actions)
 
         # Invalid State
@@ -21,9 +20,11 @@ class MaxAgent(Agent):
             map(lambda action:
                 env.simulate_action(action),
                 valid_actions))
-        
+        print("MaxAgent action scores: {}".format(available_scores))
         # Return the index of the first action with the highest score
-        return np.argmax(available_scores)
+        best_action = np.argmax(available_scores)
+        print("MaxAgent best action: {}\n".format(best_action))
+        return best_action
 
 
 class AdvancedMaxAgent(Agent):

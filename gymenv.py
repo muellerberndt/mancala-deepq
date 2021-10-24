@@ -88,11 +88,12 @@ class MancalaEnv(gym.Env):
 
         assert isinstance(action, numpy.int64)
 
-        n_stones = self.state[index]
-
         state_copy = copy.copy(self.state)
-        score = 0
+        score = state_copy[0]
+        n_stones = state_copy[index]
+
         if n_stones == 0:
+            print("Invalid acton: {}", action)
             return score
 
         state_copy[index] = 0
@@ -123,14 +124,21 @@ class MancalaEnv(gym.Env):
                     state_copy[ptr] = state_copy[opposite_index] = 0
                     score = state_copy[0]
 
+        else:
+            score = state_copy[0]
+
+        print("Simulated action: {}, score: {}".format(action, score))
         # Return score+1 if the turn ends in the own score board
         # to reward this action over equal score outcomes
 
+        # do we even want that?
+        # may not be relevant actually.
         if self.active_player == 0 and ptr == 7:
             score += 1
         elif ptr == 0:
             score += 1
 
+        print("Simulated action repeat move: {}, score: {}".format(action, score))
         return score
 
     def do_action(self, action: int):

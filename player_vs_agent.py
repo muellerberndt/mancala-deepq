@@ -84,14 +84,13 @@ while 1:
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
-        action = agent.select_action(p2_view, valid_actions)
+        action = agent.select_action(p2_view, valid_actions, env)
 
         time.sleep(0.25)
         env.indicate_action_on_screen(action)
         time.sleep(0.75)
 
-        state, reward, done, info = env.step(action)
-
+        state, reward, done, info = env.step(valid_actions[action])
         debug_print("AI", p2_view, env, action, reward)
 
         if done:
