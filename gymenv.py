@@ -25,6 +25,7 @@ DARK_GRAY = (100, 100, 100)
 MARGIN = 1
 
 import pygame
+import copy
 
 pygame.font.init()
 myfont = pygame.font.SysFont('Arial', math.floor(PIXEL_WIDTH / 5))
@@ -71,6 +72,66 @@ class MancalaEnv(gym.Env):
             ptr += 1
 
         return ptr
+
+    def simulate_action(self, action: int):
+        """
+        An action is simulated to determine the best option of an action given a current state.
+        The action is in the range between 0 and 5, excluding invalid actions e.g count 0 of an index.
+        """
+
+        if self.active_player == 0:
+            index = action + 1
+        else:
+            index = 8 + action
+
+        assert isinstance(self.state[0], numpy.int64)
+
+        assert isinstance(action, numpy.int64)
+
+        n_stones = self.state[index]
+
+        state_copy = copy.copy(self.state)
+        score = 0
+        if n_stones == 0:
+            return score
+
+        state_copy[index] = 0
+
+        ptr = index
+        for i in range(n_stones):
+            # Advance a "pointer" on the state array that follows certain rules.
+            ptr = self.advance_ptr(ptr)
+            state_copy[ptr] += 1
+
+        '''
+        Check if the move ended in an empty field. If it does the player wins all balls from
+        the opposite field.
+        '''
+
+        if state_copy[ptr] == 1 and ptr not in [0, 7]:
+
+            opposite_index = 14 - ptr
+
+            if state_copy[opposite_index] > 0:
+
+                if self.active_player == 0 and ptr < 7:
+                    state_copy[7] += state_copy[opposite_index] + 1
+                    state_copy[ptr] = state_copy[opposite_index] = 0
+                    score = state_copy[7]
+                elif ptr > 7:
+                    state_copy[0] += state_copy[opposite_index] + 1
+                    state_copy[ptr] = state_copy[opposite_index] = 0
+                    score = state_copy[0]
+
+        # Return score+1 if the turn ends in the own score board
+        # to reward this action over equal score outcomes
+
+        if self.active_player == 0 and ptr == 7:
+            score += 1
+        elif ptr == 0:
+            score += 1
+
+        return score
 
     def do_action(self, action: int):
         """
