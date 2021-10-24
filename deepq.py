@@ -41,7 +41,7 @@ if torch.cuda.is_available():
     EPS_END = 0.05
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.0000005
+    LR = 0.00001
     UPDATE_TARGET = 2500
 
 else:
@@ -69,9 +69,9 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 512)
-        self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512, 6)
+        self.fc1 = nn.Linear(14, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.fc3 = nn.Linear(256, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
