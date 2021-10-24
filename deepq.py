@@ -19,7 +19,7 @@ from gymenv import MancalaEnv
 from agent import Agent
 
 model_fn = os.path.join("save", "policy")
-REPORTING_PERIOD = 20
+REPORTING_PERIOD = 100
 
 if torch.cuda.is_available():
 
@@ -29,15 +29,15 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 256
+    BATCH_SIZE = 128
     GAMMA = 0.8
     EPS_START = 1
     EPS_END = 0.05
     EPS_END = 0.05
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.0005
-    UPDATE_TARGET = 1000
+    LR = 0.001
+    UPDATE_TARGET = 5000
 
 else:
     # CPU Config
@@ -46,7 +46,7 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 256
+    BATCH_SIZE = 128
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
@@ -63,14 +63,16 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 6)
+        self.fc1 = nn.Linear(14, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 128)
+        self.fc4 = nn.Linear(128, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
+        x = F.relu(self.fc4(x))
 
         result = torch.sub(x, action_mask)
 
@@ -321,7 +323,7 @@ if __name__ == '__main__':
                         len(memory),
                       )
                     )
-                    print("Avg. loss since last log: {}, "
+                    print("Average training loss: {}, "
                           "Agent exploration rate: {}".format(
                         total_loss / n_batches_this_period,
                         agent.get_exploration_rate(),
