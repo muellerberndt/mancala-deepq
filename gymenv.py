@@ -179,13 +179,10 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-        if done:
-            if self.get_player_score(self.active_player) == max(self.state[0], self.state[7]):
-                reward = self.get_player_score(player) - initial_score + WINNER_REWARD
-            else:
-                reward = 0
-        else:
-            reward = self.get_player_score(player) - initial_score
+        elif self.get_player_score(0) > 36 or self.get_player_score(1) > 36:
+            done = True
+
+        reward = self.get_player_score(player) - initial_score
 
         return self.get_observation(), reward, done, {}
 

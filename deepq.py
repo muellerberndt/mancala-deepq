@@ -21,12 +21,6 @@ from agent import Agent
 model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 20
 
-
-class ScaledFloatFrame(gym.ObservationWrapper):
-    def observation(self, obs):
-        return np.array(obs).astype(np.float32) / 72.
-
-
 if torch.cuda.is_available():
 
     # GPU Config
@@ -35,8 +29,8 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 8192
-    GAMMA = 0.98
+    BATCH_SIZE = 4096
+    GAMMA = 0.8
     EPS_START = 1
     EPS_END = 0.05
     EPS_DECAY = 0.0000025
@@ -57,7 +51,7 @@ else:
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
-    LR = 0.0000001
+    LR = 0.000001
     UPDATE_TARGET = 2500
 
 
@@ -171,6 +165,8 @@ class DeepQAgent(Agent):
             with torch.no_grad():
                 input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
 
+                input_t = input_t / 72. # Normalize
+
                 values = self.policy_net(input_t, action_mask).to(self.device)
 
                 return np.int64(torch.argmax(values).item())
@@ -205,10 +201,10 @@ def extract_tensors(experiences):
     # Convert batch of Experiences to Experience of batches
     batch = Experience(*zip(*experiences))
 
-    t1 = torch.FloatTensor(batch.state).reshape(BATCH_SIZE, 14).to(device)
+    t1 = (torch.FloatTensor(batch.state) / 72.).reshape(BATCH_SIZE, 14).to(device)
     t2 = torch.LongTensor(batch.action).to(device)
     t3 = torch.LongTensor(batch.reward).to(device)
-    t4 = torch.FloatTensor(batch.next_state).reshape(BATCH_SIZE, 14).to(device)
+    t4 = (torch.FloatTensor(batch.next_state) / 72.).reshape(BATCH_SIZE, 14).to(device)
 
     return t1, t2, t3, t4
 
@@ -326,11 +322,8 @@ if __name__ == '__main__':
                     n_batches_this_period = 0
 
             if done:
-                episode_durations.append(timestep)
-                episode_rewards.append(ep_reward)
 
                 if n_episodes % REPORTING_PERIOD == 0:
-
                     print("Episode {} completed, last {} episodes avg. duration: {}, avg. reward: {}".format(
                         n_episodes,
                         REPORTING_PERIOD,
@@ -338,4 +331,8 @@ if __name__ == '__main__':
                         np.mean(episode_rewards[-REPORTING_PERIOD:])
                     ))
 
+                episode_durations.append(timestep)
+                episode_rewards.append(ep_reward)
                 break
+
+

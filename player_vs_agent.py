@@ -84,8 +84,6 @@ while 1:
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
-        # input_t = torch.FloatTensor(p2_view).unsqueeze(0).to(device)
-
         action = agent.select_action(p2_view, valid_actions)
 
         time.sleep(0.25)
