@@ -35,13 +35,13 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 4096
+    BATCH_SIZE = 16384
     GAMMA = 0.98
     EPS_START = 1
-    EPS_END = 0.25
-    EPS_DECAY = 0.000005
+    EPS_END = 0.05
+    EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.00001
+    LR = 0.000001
     UPDATE_TARGET = 2500
 
 else:
@@ -51,8 +51,8 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 4096
-    GAMMA = 0.85
+    BATCH_SIZE = 16000
+    GAMMA = 0.95
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
@@ -306,11 +306,11 @@ if __name__ == '__main__':
                         )
                     )
 
-                    if n_batches_total > 0 and n_batches_total % 800 == 0:
+                    if n_batches_total % 1000 == 0:
 
                         writer.add_scalar("Loss", total_loss / n_batches_this_period, n_batches_total)
                         writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_batches_total)
-                        writer.add_scalar("Episode duration", np.mean(episode_rewards[-10:]), n_batches_total)
+                        writer.add_scalar("Episode duration", np.mean(episode_durations[-10:]), n_batches_total)
 
                         writer.flush()
 
