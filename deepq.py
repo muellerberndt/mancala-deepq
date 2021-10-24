@@ -35,13 +35,13 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 16384
+    BATCH_SIZE = 8192
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.05
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.000001
+    LR = 0.0000005
     UPDATE_TARGET = 2500
 
 else:
@@ -51,8 +51,8 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 16000
-    GAMMA = 0.95
+    BATCH_SIZE = 2048
+    GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
@@ -149,10 +149,9 @@ class DeepQAgent(Agent):
     def get_exploration_rate(self):
         return self.strategy.get_exploration_rate(self.current_step)
 
-    def select_action(self, state, valid_actions):
+    def select_action(self, state, valid_actions=[], training_mode=False):
         super().select_action(state, valid_actions)
         rate = self.get_exploration_rate()
-        action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float).to(device)
 
         if rate > random.random():
             if len(valid_actions) == 0:
@@ -160,6 +159,15 @@ class DeepQAgent(Agent):
             else:
                 return np.random.choice(valid_actions)
         else:
+
+            if training_mode:
+                action_mask = torch.zeros(6, dtype=torch.float).to(device)
+            else:
+                action_mask = torch.empty(6, dtype=torch.float).fill_(float("inf"), ).to(device)
+                action_mask[valid_actions] = 0.
+
+            action_mask = action_mask.unsqueeze(0)
+
             with torch.no_grad():
                 input_t = torch.FloatTensor(state).unsqueeze(0).to(device)
 
@@ -249,11 +257,11 @@ if __name__ == '__main__':
             valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
-                action = agent.select_action(state, valid_actions)
+                action = agent.select_action(state, valid_actions, training_mode=True)
                 next_state, reward, done, info = env.step(action)
             else:
                 state = MancalaEnv.shift_view_p2(state)
-                action = agent.select_action(state, valid_actions)
+                action = agent.select_action(state, valid_actions, training_mode=True)
                 next_state, reward, done, info = env.step(action)
                 next_state = MancalaEnv.shift_view_p2(next_state)
 
