@@ -29,13 +29,13 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 128
-    GAMMA = 0.8
+    BATCH_SIZE = 32
+    GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.05
-    EPS_DECAY = 0.0000025
+    EPS_DECAY = 0.0000005
     MEMORY_SIZE = 5000000
-    LR = 0.005
+    LR = 0.001
     UPDATE_TARGET = 1500
 
 else:
@@ -45,7 +45,7 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 128
+    BATCH_SIZE = 16
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
@@ -170,6 +170,8 @@ class DeepQAgent(Agent):
 
                 values = self.policy_net(input_t, action_mask).to(self.device)
 
+                # print("Q Values: {}".format(values))
+
                 return np.int64(torch.argmax(values).item())
 
 
@@ -253,7 +255,7 @@ if __name__ == '__main__':
             valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
-                action = agent.select_action(state, valid_actions, training_mode=False)
+                action = agent.select_action(state, valid_actions, training_mode=True)
                 next_state, reward, done, info = env.step(action)
                 if not done:
                     memory.push(Experience(state, action, next_state, reward))
@@ -263,7 +265,7 @@ if __name__ == '__main__':
 
             else:
                 # Choose an action from player 2's perspective
-                action = agent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, training_mode=False)
+                action = agent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, training_mode=True)
                 next_state, reward, done, info = env.step(action)
                 if not done:
                     memory.push(Experience(
