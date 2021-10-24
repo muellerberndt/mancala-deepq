@@ -5,7 +5,7 @@ import numpy as np
 class MaxAgent(Agent):
 
     def __init__(self):
-        super().init()
+        super().__init__()
 
     def select_action(self, state, valid_actions) -> np.int64:
         env = MancalaEnv(has_screen=False)

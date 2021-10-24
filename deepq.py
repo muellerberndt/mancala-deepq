@@ -33,11 +33,10 @@ if torch.cuda.is_available():
     GAMMA = 0.8
     EPS_START = 1
     EPS_END = 0.05
-    EPS_END = 0.05
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.001
-    UPDATE_TARGET = 5000
+    LR = 0.005
+    UPDATE_TARGET = 1500
 
 else:
     # CPU Config

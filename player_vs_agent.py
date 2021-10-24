@@ -4,6 +4,7 @@ import time
 import pygame
 from pygame.locals import MOUSEBUTTONDOWN, QUIT
 import torch
+from simple import MaxAgent
 import numpy as np
 
 from gymenv import MancalaEnv, InvalidCoordinatesError
@@ -61,7 +62,8 @@ if model_fn is not None and os.path.isfile(model_fn):
 else:
     policy_net = MancalaAgentModel().to(device)
 
-agent = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+# agent = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+agent = MaxAgent()
 
 state = env.reset()
 
@@ -79,8 +81,6 @@ while 1:
 
         action_mask = torch.empty(6, dtype=torch.float).fill_(float("inf"),)
         valid_actions = env.get_valid_actions()
-        action_mask[valid_actions] = 0.
-        action_mask = action_mask.unsqueeze(0)
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
