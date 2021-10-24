@@ -12,7 +12,7 @@ class InvalidCoordinatesError(Exception):
     pass
 
 PIXEL_WIDTH = 70
-INVALID_ACTION_REWARD = -10
+INVALID_ACTION_REWARD = -1
 WINNER_REWARD = 0
 
 WHITE = (255, 255, 255)

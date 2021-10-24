@@ -29,14 +29,15 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 4096
+    BATCH_SIZE = 256
     GAMMA = 0.8
     EPS_START = 1
     EPS_END = 0.05
+    EPS_END = 0.05
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 5000000
-    LR = 0.00001
-    UPDATE_TARGET = 2500
+    LR = 0.0005
+    UPDATE_TARGET = 1000
 
 else:
     # CPU Config
@@ -45,14 +46,14 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 2048
+    BATCH_SIZE = 256
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
     LR = 0.000001
-    UPDATE_TARGET = 2500
+    UPDATE_TARGET = 2500s
 
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
@@ -252,7 +253,7 @@ if __name__ == '__main__':
             valid_actions = env.get_valid_actions()
 
             if env.active_player == 0:
-                action = agent.select_action(state, valid_actions, training_mode=True)
+                action = agent.select_action(state, valid_actions, training_mode=False)
                 next_state, reward, done, info = env.step(action)
                 if not done:
                     memory.push(Experience(state, action, next_state, reward))
@@ -262,7 +263,7 @@ if __name__ == '__main__':
 
             else:
                 # Choose an action from player 2's perspective
-                action = agent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, training_mode=True)
+                action = agent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, training_mode=False)
                 next_state, reward, done, info = env.step(action)
                 if not done:
                     memory.push(Experience(
@@ -304,41 +305,10 @@ if __name__ == '__main__':
                 n_batches_total += 1
                 n_batches_this_period += 1
 
-                if n_batches_total % UPDATE_TARGET == 0:
-                    print("Updating target net & saving checkpoint...")
-                    target_net.load_state_dict(policy_net.state_dict())
-
-                    if os.path.isfile(model_fn):
-                        os.remove(model_fn)
-                    torch.save(policy_net, model_fn)
-
-                if n_batches_total > 0 and n_batches_total % 200 == 0:
-                    print("Total batches trained: {}, replay mem size: {}".format(
-                        n_batches_total,
-                        len(memory),
-                        )
-                    )
-                    print("Avg. loss for last training period: {}, "
-                          "Agent exploration rate: {}".format(
-                        total_loss / n_batches_this_period,
-                        agent.get_exploration_rate(),
-                        )
-                    )
-
-                    if n_batches_total % 1000 == 0:
-
-                        writer.add_scalar("Loss", total_loss / n_batches_this_period, n_batches_total)
-                        writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_batches_total)
-                        writer.add_scalar("Episode duration", np.mean(episode_durations[-10:]), n_batches_total)
-
-                        writer.flush()
-
-                    total_loss = 0
-                    n_batches_this_period = 0
-
             if done:
 
                 if n_episodes % REPORTING_PERIOD == 0:
+
                     print("Episode {} completed, last {} episodes avg. duration: {}, avg. reward: {}".format(
                         n_episodes,
                         REPORTING_PERIOD,
@@ -346,8 +316,41 @@ if __name__ == '__main__':
                         np.mean(episode_rewards[-REPORTING_PERIOD:])
                     ))
 
+                    # Report on training
+                    print("Total batches trained: {}, replay mem size: {}".format(
+                        n_batches_total,
+                        len(memory),
+                      )
+                    )
+                    print("Avg. loss since last log: {}, "
+                          "Agent exploration rate: {}".format(
+                        total_loss / n_batches_this_period,
+                        agent.get_exploration_rate(),
+                      )
+                    )
+                    # Tensorboard reporting
+
+                    writer.add_scalar("Loss", total_loss / n_batches_this_period, n_episodes)
+                    writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
+                    writer.add_scalar("Episode duration", np.mean(np.mean(episode_durations[-REPORTING_PERIOD:])),
+                                      n_episodes)
+
+                    total_loss = 0
+                    n_batches_this_period = 0
+
+                if n_episodes % UPDATE_TARGET == 0:
+                    print("Updating target net & saving checkpoint...")
+                    target_net.load_state_dict(policy_net.state_dict())
+
+                    if os.path.isfile(model_fn):
+                        os.remove(model_fn)
+                    torch.save(policy_net, model_fn)
+
+                writer.flush()
+
                 episode_durations.append(timestep)
                 episode_rewards.append(ep_reward)
+
                 break
 
 
