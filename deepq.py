@@ -196,7 +196,6 @@ class QValues:
         values[non_final_state_locations] = target_net(non_final_states, action_mask).max(dim=1)[0].detach()
         return values
 
-
 def extract_tensors(experiences):
     # Convert batch of Experiences to Experience of batches
     batch = Experience(*zip(*experiences))
@@ -255,17 +254,33 @@ if __name__ == '__main__':
             if env.active_player == 0:
                 action = agent.select_action(state, valid_actions, training_mode=True)
                 next_state, reward, done, info = env.step(action)
-            else:
-                state = MancalaEnv.shift_view_p2(state)
-                action = agent.select_action(state, valid_actions, training_mode=True)
-                next_state, reward, done, info = env.step(action)
-                next_state = MancalaEnv.shift_view_p2(next_state)
+                if not done:
+                    memory.push(Experience(state, action, next_state, reward))
+                else:
+                    # Return zero state when episode ends
+                    memory.push(Experience(state, action, np.zeros(14), reward))
 
-            if not done:
-                memory.push(Experience(state, action, next_state, reward))
             else:
-                # Return zero state when episode ends
-                memory.push(Experience(state, action, np.zeros(14), reward))
+                # Choose an action from player 2's perspective
+                action = agent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, training_mode=True)
+                next_state, reward, done, info = env.step(action)
+                if not done:
+                    memory.push(Experience(
+                        MancalaEnv.shift_view_p2(state),
+                        action,
+                        MancalaEnv.shift_view_p2(next_state),
+                        reward
+                    )
+                )
+                else:
+                    # Return zero state when episode ends
+                    memory.push(Experience(
+                        MancalaEnv.shift_view_p2(state),
+                        action,
+                        np.zeros(14),
+                        reward
+                    )
+                )
 
             ep_reward += reward
 
