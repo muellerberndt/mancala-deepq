@@ -13,7 +13,7 @@ class InvalidCoordinatesError(Exception):
 
 PIXEL_WIDTH = 70
 INVALID_ACTION_REWARD = -10
-WINNER_REWARD = 100
+WINNER_REWARD = 0
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)

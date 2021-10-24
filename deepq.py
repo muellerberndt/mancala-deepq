@@ -52,16 +52,16 @@ else:
     # Training settings
 
     BATCH_SIZE = 4096
-    GAMMA = 0.98
+    GAMMA = 0.85
     EPS_START = 1
     EPS_END = 0.01
-    EPS_DECAY = 0.00001
+    EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
     LR = 0.0000001
     UPDATE_TARGET = 2500
 
 
-ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6))
+ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
 
 
 class MancalaAgentModel(nn.Module):
@@ -70,11 +70,13 @@ class MancalaAgentModel(nn.Module):
         super(MancalaAgentModel, self).__init__()
 
         self.fc1 = nn.Linear(14, 512)
-        self.fc2 = nn.Linear(512, 6)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
 
         result = torch.sub(x, action_mask)
 
@@ -150,7 +152,7 @@ class DeepQAgent(Agent):
     def select_action(self, state, valid_actions):
         super().select_action(state, valid_actions)
         rate = self.get_exploration_rate()
-        action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float)
+        action_mask = torch.zeros((BATCH_SIZE, 6), dtype=float).to(device)
 
         if rate > random.random():
             if len(valid_actions) == 0:
@@ -319,7 +321,6 @@ if __name__ == '__main__':
                         np.mean(episode_durations[-REPORTING_PERIOD:]),
                         np.mean(episode_rewards[-REPORTING_PERIOD:])
                     ))
-
 
                     writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
 
