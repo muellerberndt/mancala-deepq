@@ -10,33 +10,30 @@ from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
 
-def debug_print(player, initial_state, env, action):
+def debug_print(player,state_before, state_after, action):
 
     format_state = lambda s: "[{}] {} [{}] {}".format(s[0], s[1:7], s[7], s[8:14])
 
     print("{} action: {}\nState before:{}\nState after: {}\n".format(
         player,
         action,
-        format_state(initial_state),
-        format_state(env.state),
+        format_state(state_before),
+        format_state(state_after),
     ))
 
 
 def handle_game_end():
-    if done:
-        print("Game has ended!\nFinal scores: P1 {}, P2 {}".format(
-            env.get_player_score(0),
-            env.get_player_score(1)
-              ))
-        env.reset()
+    print("Game has ended!\nFinal scores: P1 {}, P2 {}".format(
+        env.get_player_score(0),
+        env.get_player_score(1)
+          ))
+    env.reset()
 
 
-def do_move(action):
+def display_action(action) -> bool:
     time.sleep(0.25)
     env.indicate_action_on_screen(action)
     time.sleep(0.75)
-    state, reward, done, info = env.step(action)
-
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
 os.environ['SDL_VIDEO_CENTERED'] = '0'
@@ -76,20 +73,25 @@ while 1:
 
     if env.get_active_player() == 0:  # Player 1
 
-        action = player1.select_action(state, valid_actions, env=env)
+        old_state = state
 
-        do_move(action)
+        action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+        display_action(action)
 
-        debug_print("Player 1:", state, env, action)
+        state, reward, done, info = env.step(action)
+
+        debug_print("Player 1:", old_state, state, action)
 
     else:  # Player 2
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
-        action = player2.select_action(p2_view, valid_actions, env=env)
+        action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
+        display_action(action)
 
-        do_move(action)
+        state, reward, done, info = env.step(action)
 
-        debug_print("Player 2:", p2_view, env, action)
+        debug_print("Player 2:", p2_view, MancalaEnv.shift_view_p2(state), action)
 
-    handle_game_end()
+    if done:
+        handle_game_end()

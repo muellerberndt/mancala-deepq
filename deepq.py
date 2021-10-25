@@ -31,14 +31,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 8
+    BATCH_SIZE = 32
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
-    LR = 0.0001
-    UPDATE_TARGET = 4000
+    LR = 0.01
+    UPDATE_TARGET = 1000
 
 else:
     # CPU Config
@@ -48,14 +48,14 @@ else:
 
     # Training settings
 
-    BATCH_SIZE = 8
+    BATCH_SIZE = 16
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
-    LR = 0.0001
-    UPDATE_TARGET = 5000
+    LR = 0.01
+    UPDATE_TARGET = 1000
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
 
@@ -151,6 +151,7 @@ class DeepQAgent(Agent):
         super().select_action(state, valid_actions)
 
         training_mode = False if "training_mode" not in kwargs else kwargs['training_mode']
+        debug_q_values = False if "debug_q_values" not in kwargs else kwargs['debug_q_values']
 
         rate = self.get_exploration_rate()
 
@@ -176,7 +177,8 @@ class DeepQAgent(Agent):
 
                 values = self.policy_net(input_t, action_mask).to(self.device)
 
-                # print("Q Values: {}".format(values))
+                if debug_q_values:
+                    print("Q Values: {}".format(values))
 
                 return np.int64(torch.argmax(values).item())
 
@@ -279,6 +281,7 @@ if __name__ == '__main__':
 
                 if player_2_last_state is not None:
 
+                    '''
                     memory.push(Experience(
                         MancalaEnv.shift_view_p2(player_2_last_state),
                         player_2_action,
@@ -286,10 +289,12 @@ if __name__ == '__main__':
                         player2_reward
                         )
                     )
+                    '''
 
                 # Choose an action from player 2's perspective
 
                 player_2_action = maxagent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
+
                 next_state, player2_reward, done, info = env.step(player_2_action)
 
                 player_2_last_state = state
