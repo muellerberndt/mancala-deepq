@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from gymenv import MancalaEnv
+from gymenv import MancalaEnv, WINNER_REWARD
 from agent import Agent
 from simple import MaxAgent
 
@@ -35,10 +35,10 @@ if torch.cuda.is_available():
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
-    EPS_DECAY = 0.0000025
+    EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
-    LR = 0.01
-    UPDATE_TARGET = 1000
+    LR = 0.0001
+    UPDATE_TARGET = 3000
 
 else:
     # CPU Config
@@ -54,8 +54,8 @@ else:
     EPS_END = 0.01
     EPS_DECAY = 0.0000025
     MEMORY_SIZE = 2000000
-    LR = 0.01
-    UPDATE_TARGET = 1000
+    LR = 0.0001
+    UPDATE_TARGET = 5000
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
 
@@ -159,6 +159,7 @@ class DeepQAgent(Agent):
             if len(valid_actions) == 0:
                 return np.int64(0)
             else:
+                # return maxagent.select_action(state, valid_actions=valid_actions, env=env)
                 return np.random.choice(valid_actions)
         else:
 
@@ -273,9 +274,9 @@ if __name__ == '__main__':
                 player_1_action = agent.select_action(state, valid_actions, training_mode=False)
                 next_state, player_1_reward, done, info = env.step(player_1_action)
 
-                player_1_last_state = state.copy()
-
                 ep_reward_model += player_1_reward
+
+                player_1_last_state = state.copy()
 
             else:
 
@@ -344,13 +345,13 @@ if __name__ == '__main__':
                         agent.get_exploration_rate(),
                       )
                     )
-                    # Tensorboard reporting
+                    # Tensorboard reporting`
 
                     writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes)
                     writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
-                    writer.add_scalar("Episode duration", np.mean(np.mean(episode_durations[-REPORTING_PERIOD:])),
+                    writer.add_scalar("Episode duration", np.mean(episode_durations[-REPORTING_PERIOD:]),
                                       n_episodes)
-                    writer.add_scalar("Reward earned by model", ep_reward_model / REPORTING_PERIOD, n_episodes)
+                    writer.add_scalar("Reward earned by model", np.mean(episode_rewards[-REPORTING_PERIOD:]), n_episodes)
 
                     total_loss = 0
                     n_batches_this_period = 0
@@ -359,6 +360,12 @@ if __name__ == '__main__':
 
                 if done:
 
+                    memory.push(Experience(
+                        player_1_last_state,
+                        player_1_action,
+                        np.zeros(14),
+                        player_1_reward))
+
                     if n_episodes % UPDATE_TARGET == 0:
                         print("Updating target net & saving checkpoint...")
                         target_net.load_state_dict(policy_net.state_dict())
@@ -366,8 +373,6 @@ if __name__ == '__main__':
                         if os.path.isfile(model_fn):
                             os.remove(model_fn)
                         torch.save(policy_net, model_fn)
-
-                        optimizer = optim.Adam(params=policy_net.parameters(), lr=LR)
 
                     episode_durations.append(timestep)
                     episode_rewards.append(ep_reward_model)

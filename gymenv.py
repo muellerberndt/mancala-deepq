@@ -17,6 +17,7 @@ class InvalidCoordinatesError(Exception):
 PIXEL_WIDTH = 70
 INVALID_ACTION_REWARD = -10
 WINNER_REWARD = 0
+LOSER_PENALTY = 0
 
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
@@ -246,10 +247,27 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-        elif self.get_player_score(0) > 36 or self.get_player_score(1) > 36:
+        reward = self.get_player_score(player) - initial_score
+
+        if self.get_player_score(0) > 36:
+            # Player 1 wins
+
             done = True
 
-        reward = self.get_player_score(player) - initial_score
+            if self.active_player == 0:
+                reward += WINNER_REWARD
+            else:
+                reward -= LOSER_PENALTY
+
+        if self.get_player_score(1) > 36:
+            # Player 2 wins
+
+            done = True
+
+            if self.active_player == 1:
+                reward += WINNER_REWARD
+            else:
+                reward -= LOSER_PENALTY
 
         return self.get_observation(), reward, done, {}
 
