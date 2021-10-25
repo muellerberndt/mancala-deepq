@@ -20,10 +20,10 @@ class MaxAgent(Agent):
             map(lambda action:
                 kwargs['env'].simulate_action(action),
                 valid_actions))
-        print("MaxAgent action scores: {}".format(available_scores))
+        # print("MaxAgent action scores: {}".format(available_scores))
         # Return the index of the first action with the highest score
         best_action = valid_actions[np.argmax(available_scores)]
-        print("MaxAgent best action: {}\n".format(best_action))
+        # print("MaxAgent best action: {}\n".format(best_action))
         return best_action
 
 
