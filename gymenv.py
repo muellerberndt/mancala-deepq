@@ -100,6 +100,8 @@ class MancalaEnv(gym.Env):
             ptr = self.advance_ptr(ptr)
             state_copy[ptr] += 1
 
+        score = state_copy[0]
+
         '''
         Check if the move ended in an empty field. If it does the player wins all balls from
         the opposite field.
@@ -120,10 +122,7 @@ class MancalaEnv(gym.Env):
                     state_copy[ptr] = state_copy[opposite_index] = 0
                     score = state_copy[0]
 
-        else:
-            score = state_copy[0]
-
-        print("Simulated action: {}, score: {}".format(action, score))
+        print("Simulated action: {}, stones: {} score: {}".format(action, n_stones, score))
         # Return score+1 if the turn ends in the own score board
         # to reward this action over equal score outcomes
 
@@ -134,7 +133,7 @@ class MancalaEnv(gym.Env):
         elif ptr == 0:
             score += 1
 
-        print("Simulated action repeat move: {}, score: {}".format(action, score))
+        print("Simulated action repeat move: {}, stones: {} score: {}".format(action, n_stones, score))
         return score
 
     def do_action(self, action: int):

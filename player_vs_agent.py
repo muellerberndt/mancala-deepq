@@ -62,8 +62,8 @@ if model_fn is not None and os.path.isfile(model_fn):
 else:
     policy_net = MancalaAgentModel().to(device)
 
-agent = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
-# agent = MaxAgent()
+# agent = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+agent = MaxAgent()
 
 state = env.reset()
 
@@ -87,7 +87,7 @@ while 1:
         action = agent.select_action(p2_view, valid_actions, env)
 
         time.sleep(0.25)
-        env.indicate_action_on_screen(action)
+        env.indicate_action_on_screen(valid_actions[action])
         time.sleep(0.75)
 
         state, reward, done, info = env.step(valid_actions[action])

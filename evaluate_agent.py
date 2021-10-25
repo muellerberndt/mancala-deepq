@@ -65,10 +65,10 @@ env = MancalaEnv(has_screen=True)
 agent = MaxAgent()
 
 state = env.create_state(
-    [0,
-     0, 0, 8, 8, 8, 8, 
-     2,
-     7, 7, 6, 6, 6, 6]
+    [1,
+     1, 1, 0, 9, 9, 9, 
+     3,
+     8, 1, 8, 8, 7, 7]
     , 1)
 
 done = False
