@@ -5,11 +5,14 @@ import numpy as np
 import math
 import gym
 
+
 class InvalidActionError(Exception):
     pass
 
+
 class InvalidCoordinatesError(Exception):
     pass
+
 
 PIXEL_WIDTH = 70
 INVALID_ACTION_REWARD = -10

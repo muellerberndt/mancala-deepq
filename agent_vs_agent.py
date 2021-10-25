@@ -56,7 +56,7 @@ else:
 
 env = MancalaEnv(has_screen=True)
 
-model_fn = os.path.join(os.getcwd(), "save", "policy")
+model_fn = os.path.join(os.getcwd(), "save", "good-1")
 policy_net = torch.load(model_fn, map_location='cpu')
 
 player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
@@ -74,7 +74,7 @@ while 1:
 
     valid_actions = env.get_valid_actions()
 
-    if env.get_active_player() == 0: # Player 1
+    if env.get_active_player() == 0:  # Player 1
 
         action = player1.select_action(state, valid_actions, env=env)
 
@@ -82,7 +82,7 @@ while 1:
 
         debug_print("Player 1:", state, env, action)
 
-    else: # Player 2
+    else:  # Player 2
 
         p2_view = MancalaEnv.shift_view_p2(state)
 
