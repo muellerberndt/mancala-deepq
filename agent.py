@@ -11,5 +11,5 @@ class Agent(object):
     def reset_current_step(self, step):
         self.current_step = step
 
-    def select_action(self, state, valid_actions) -> np.int64:
+    def select_action(self, state, valid_actions, **kwargs) -> np.int64:
         self.current_step += 1

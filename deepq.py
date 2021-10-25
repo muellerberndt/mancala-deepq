@@ -33,9 +33,9 @@ if torch.cuda.is_available():
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.05
-    EPS_DECAY = 0.0000005
+    EPS_DECAY = 0.0000002
     MEMORY_SIZE = 5000000
-    LR = 0.001
+    LR = 0.0005
     UPDATE_TARGET = 1500
 
 else:
@@ -144,8 +144,11 @@ class DeepQAgent(Agent):
     def get_exploration_rate(self):
         return self.strategy.get_exploration_rate(self.current_step)
 
-    def select_action(self, state, valid_actions=[], training_mode=False):
+    def select_action(self, state, valid_actions, **kwargs):
         super().select_action(state, valid_actions)
+
+        training_mode = False if "training_mode" not in kwargs else kwargs['training_mode']
+
         rate = self.get_exploration_rate()
 
         if rate > random.random():
@@ -219,7 +222,7 @@ if __name__ == '__main__':
 
     if model_fn is not None and os.path.isfile(model_fn):
         print("Resuming from checkpoint: {} ...".format(model_fn))
-        policy_net = torch.load(os.path.join(os.getcwd(), model_fn))
+        policy_net = torch.load(os.path.join(os.getcwd(), model_fn), map_location='cpu')
     else:
         policy_net = MancalaAgentModel().to(device)
 
