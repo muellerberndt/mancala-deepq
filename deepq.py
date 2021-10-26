@@ -32,14 +32,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 256
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
     LR = 0.001
-    UPDATE_TARGET = 3000
+    UPDATE_TARGET = 1000
 
 else:
     # CPU Config
@@ -53,10 +53,10 @@ else:
     GAMMA = 0.98
     EPS_START = 1
     EPS_END = 0.01
-    EPS_DECAY = 0.0000025
+    EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
     LR = 0.0001
-    UPDATE_TARGET = 5000
+    UPDATE_TARGET = 1000
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
 
@@ -66,16 +66,18 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 6)
+        self.fc1 = nn.Linear(14, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, 64)
+        self.fc4 = nn.Linear(64, 64)
+        self.fc5 = nn.Linear(64, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = F.relu(self.fc4(x))
+        x = F.relu(self.fc5(x))
 
         result = torch.sub(x, action_mask)
 
@@ -344,21 +346,24 @@ if __name__ == '__main__':
                         len(memory),
                         )
                     )
-                    print("Average training loss: {}, "
-                          "Agent exploration rate: {}".format(
-                        total_loss / n_batches_this_period,
-                        agent.get_exploration_rate(),
-                        )
-                    )
 
-                    # Tensorboard reporting`
-
-                    writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes_played)
                     writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes_played)
                     writer.add_scalar("Episode duration", np.mean(episode_durations[-REPORTING_PERIOD:]),
                                       n_episodes_played)
                     writer.add_scalar("Reward earned by model", np.mean(episode_rewards[-REPORTING_PERIOD:]),
                                       n_episodes_played)
+
+                    if n_batches_this_period > 0:
+
+                        print("Average training loss: {}, "
+                              "Agent exploration rate: {}".format(
+                            total_loss / n_batches_this_period,
+                            agent.get_exploration_rate(),
+                            )
+                        )
+
+                        writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes_played)
+
 
                     total_loss = 0
                     n_batches_this_period = 0
@@ -377,5 +382,3 @@ if __name__ == '__main__':
                 episode_rewards.append(ep_reward_model)
 
                 break
-
-
