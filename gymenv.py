@@ -256,8 +256,6 @@ class MancalaEnv(gym.Env):
 
             if self.active_player == 0:
                 reward += WINNER_REWARD
-            else:
-                reward -= LOSER_PENALTY
 
         if self.get_player_score(1) > 36:
             # Player 2 wins
@@ -266,8 +264,6 @@ class MancalaEnv(gym.Env):
 
             if self.active_player == 1:
                 reward += WINNER_REWARD
-            else:
-                reward -= LOSER_PENALTY
 
         return self.get_observation(), reward, done, {}
 

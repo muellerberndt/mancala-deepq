@@ -15,12 +15,13 @@ import torch.nn.functional as F
 
 from torch.utils.tensorboard import SummaryWriter
 
-from gymenv import MancalaEnv, WINNER_REWARD
+from gymenv import MancalaEnv
 from agent import Agent
 from simple import MaxAgent
 
 model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 100
+STORE_LOSING_EPS_RATE = 0.9
 
 if torch.cuda.is_available():
 
@@ -37,7 +38,7 @@ if torch.cuda.is_available():
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
-    LR = 0.0001
+    LR = 0.001
     UPDATE_TARGET = 3000
 
 else:
@@ -246,7 +247,8 @@ if __name__ == '__main__':
 
     writer = SummaryWriter()
 
-    n_episodes = 0
+    n_episodes_played = 0
+    n_episodes_stored = 0
     episode_durations = []
     episode_rewards = []
     total_loss = 0
@@ -255,12 +257,13 @@ if __name__ == '__main__':
 
     while 1:
 
-        n_episodes += 1
+        n_episodes_played += 1
         ep_reward_model = 0
 
-        state = env.reset()
         player_1_last_state = None
-        player_2_last_state = None
+        episode_memory = []
+
+        state = env.reset()
 
         for timestep in count():
 
@@ -269,36 +272,22 @@ if __name__ == '__main__':
             if env.active_player == 0:
 
                 if player_1_last_state is not None:
-                    memory.push(Experience(player_1_last_state, player_1_action, state, player_1_reward))
+                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward))
 
-                player_1_action = agent.select_action(state, valid_actions, training_mode=False)
+                player_1_action = agent.select_action(state, valid_actions, training_mode=True)
                 next_state, player_1_reward, done, info = env.step(player_1_action)
 
                 ep_reward_model += player_1_reward
 
-                player_1_last_state = state.copy()
+                player_1_last_state = state
 
             else:
-
-                if player_2_last_state is not None:
-
-                    '''
-                    memory.push(Experience(
-                        MancalaEnv.shift_view_p2(player_2_last_state),
-                        player_2_action,
-                        MancalaEnv.shift_view_p2(state),
-                        player2_reward
-                        )
-                    )
-                    '''
 
                 # Choose an action from player 2's perspective
 
                 player_2_action = maxagent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
 
                 next_state, player2_reward, done, info = env.step(player_2_action)
-
-                player_2_last_state = state
 
             state = next_state
 
@@ -324,10 +313,26 @@ if __name__ == '__main__':
 
             # Handle end of episode
 
-                if done and n_episodes % REPORTING_PERIOD == 0:
+            if done:
 
-                    print("Episode {} completed, last {} episodes avg. duration: {}, avg. reward: {}".format(
-                        n_episodes,
+                if env.get_player_score(0) > env.get_player_score(1) or random.random() > STORE_LOSING_EPS_RATE:
+
+                    [memory.push(exp) for exp in episode_memory]
+
+                    memory.push(Experience(
+                        player_1_last_state,
+                        player_1_action,
+                        np.zeros(14),
+                        player_1_reward))
+
+                    n_episodes_stored += 1
+
+                # Report every REPORTING_PERIOD episodes
+
+                if n_episodes_played % REPORTING_PERIOD == 0:
+                    print("Played {} episodes, stored {} episodes,, last {} episodes avg. duration: {}, avg. reward: {}".format(
+                        n_episodes_played,
+                        n_episodes_stored,
                         REPORTING_PERIOD,
                         np.mean(episode_durations[-REPORTING_PERIOD:]),
                         np.mean(episode_rewards[-REPORTING_PERIOD:])
@@ -337,46 +342,40 @@ if __name__ == '__main__':
                     print("Total batches trained: {}, replay mem size: {}".format(
                         n_batches_total,
                         len(memory),
-                      )
+                        )
                     )
                     print("Average training loss: {}, "
                           "Agent exploration rate: {}".format(
                         total_loss / n_batches_this_period,
                         agent.get_exploration_rate(),
-                      )
+                        )
                     )
+
                     # Tensorboard reporting`
 
-                    writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes)
-                    writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes)
+                    writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes_played)
+                    writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes_played)
                     writer.add_scalar("Episode duration", np.mean(episode_durations[-REPORTING_PERIOD:]),
-                                      n_episodes)
-                    writer.add_scalar("Reward earned by model", np.mean(episode_rewards[-REPORTING_PERIOD:]), n_episodes)
+                                      n_episodes_played)
+                    writer.add_scalar("Reward earned by model", np.mean(episode_rewards[-REPORTING_PERIOD:]),
+                                      n_episodes_played)
 
                     total_loss = 0
                     n_batches_this_period = 0
 
-                writer.flush()
+                    writer.flush()
 
-                if done:
+                if n_episodes_played % UPDATE_TARGET == 0:
+                    print("Updating target net & saving checkpoint...")
+                    target_net.load_state_dict(policy_net.state_dict())
 
-                    memory.push(Experience(
-                        player_1_last_state,
-                        player_1_action,
-                        np.zeros(14),
-                        player_1_reward))
+                    if os.path.isfile(model_fn):
+                        os.remove(model_fn)
+                    torch.save(policy_net, model_fn)
 
-                    if n_episodes % UPDATE_TARGET == 0:
-                        print("Updating target net & saving checkpoint...")
-                        target_net.load_state_dict(policy_net.state_dict())
+                episode_durations.append(timestep)
+                episode_rewards.append(ep_reward_model)
 
-                        if os.path.isfile(model_fn):
-                            os.remove(model_fn)
-                        torch.save(policy_net, model_fn)
-
-                    episode_durations.append(timestep)
-                    episode_rewards.append(ep_reward_model)
-
-                    break
+                break
 
 
