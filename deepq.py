@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from gymenv import MancalaEnv
 from agent import Agent
-from simple import MaxAgent
+from simple import MaxAgent, RandomAgent
 
 model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 100
@@ -32,12 +32,12 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 256
-    GAMMA = 0.98
+    BATCH_SIZE = 128
+    GAMMA = 0.5
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
-    MEMORY_SIZE = 2000000
+    MEMORY_SIZE = 5000000
     LR = 0.001
     UPDATE_TARGET = 1000
 
@@ -55,7 +55,7 @@ else:
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
-    LR = 0.0001
+    LR = 0.001
     UPDATE_TARGET = 1000
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
@@ -136,7 +136,7 @@ class MaxQStrategy:
 
 
 class DeepQAgent(Agent):
-    def __init__(self, strategy, device, policy_net = None):
+    def __init__(self, strategy, device, policy_net=None):
         super().__init__()
 
         self.strategy = strategy
@@ -217,7 +217,7 @@ def extract_tensors(experiences):
 
     t1 = (torch.FloatTensor(batch.state) / 72.).reshape(BATCH_SIZE, 14).to(device)
     t2 = torch.LongTensor(batch.action).to(device)
-    t3 = torch.LongTensor(batch.reward).to(device)
+    t3 = torch.FloatTensor(batch.reward).to(device)
     t4 = (torch.FloatTensor(batch.next_state) / 72.).reshape(BATCH_SIZE, 14).to(device)
 
     return t1, t2, t3, t4
@@ -236,7 +236,7 @@ if __name__ == '__main__':
         policy_net = MancalaAgentModel().to(device)
 
     agent = DeepQAgent(strategy, device, policy_net)
-    maxagent = MaxAgent()
+    opponent = RandomAgent()
     policy_net = agent.policy_net
 
     memory = ReplayMem(MEMORY_SIZE)
@@ -256,6 +256,7 @@ if __name__ == '__main__':
     total_loss = 0
     n_batches_total = 0
     n_batches_this_period = 0
+    wins_model = 0
 
     while 1:
 
@@ -276,7 +277,7 @@ if __name__ == '__main__':
                 if player_1_last_state is not None:
                     episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward))
 
-                player_1_action = agent.select_action(state, valid_actions, training_mode=True)
+                player_1_action = agent.select_action(state, valid_actions, training_mode=False)
                 next_state, player_1_reward, done, info = env.step(player_1_action)
 
                 ep_reward_model += player_1_reward
@@ -287,7 +288,7 @@ if __name__ == '__main__':
 
                 # Choose an action from player 2's perspective
 
-                player_2_action = maxagent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
+                player_2_action = opponent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
 
                 next_state, player2_reward, done, info = env.step(player_2_action)
 
@@ -307,6 +308,12 @@ if __name__ == '__main__':
 
                 optimizer.zero_grad()
                 loss.backward()
+
+                '''
+                for param in policy_net.parameters():
+                    param.grad.data.clamp(-1, 1)
+                '''
+
                 optimizer.step()
 
                 total_loss += loss
@@ -316,6 +323,24 @@ if __name__ == '__main__':
             # Handle end of episode
 
             if done:
+
+                if env.get_player_score(0) > env.get_player_score(1):
+                    wins_model += 1
+
+                if n_episodes_played % REPORTING_PERIOD == 0:
+                    print("Current Q: {}\nNext Q: {}\nRewards: {}\nTarget Q: {}".format(
+                        current_q_values.flatten(),
+                        next_q_values,
+                        rewards,
+                        target_q_values
+                        )
+                    )
+
+                    print("Last {} episodes win percentage: {:.2f} %".format(
+                            REPORTING_PERIOD,
+                            100 * float(wins_model) / REPORTING_PERIOD
+                        )
+                    )
 
                 if env.get_player_score(0) > env.get_player_score(1) or random.random() > STORE_LOSING_EPS_RATE:
 
@@ -332,7 +357,7 @@ if __name__ == '__main__':
                 # Report every REPORTING_PERIOD episodes
 
                 if n_episodes_played % REPORTING_PERIOD == 0:
-                    print("Played {} episodes, stored {} episodes,, last {} episodes avg. duration: {}, avg. reward: {}".format(
+                    print("Played {} episodes, stored {} episodes, last {} episodes avg. duration: {}, avg. reward: {}".format(
                         n_episodes_played,
                         n_episodes_stored,
                         REPORTING_PERIOD,
@@ -350,8 +375,11 @@ if __name__ == '__main__':
                     writer.add_scalar("Exploration rate", agent.get_exploration_rate(), n_episodes_played)
                     writer.add_scalar("Episode duration", np.mean(episode_durations[-REPORTING_PERIOD:]),
                                       n_episodes_played)
-                    writer.add_scalar("Reward earned by model", np.mean(episode_rewards[-REPORTING_PERIOD:]),
+                    writer.add_scalar("Reward earned by model",  np.mean(episode_rewards[-REPORTING_PERIOD:]),
                                       n_episodes_played)
+                    writer.add_scalar("Win percentage", 100 * float(wins_model) / REPORTING_PERIOD, n_episodes_played)
+
+                    wins_model = 0
 
                     if n_batches_this_period > 0:
 
@@ -363,7 +391,6 @@ if __name__ == '__main__':
                         )
 
                         writer.add_scalar("Training loss", total_loss / n_batches_this_period, n_episodes_played)
-
 
                     total_loss = 0
                     n_batches_this_period = 0

@@ -3,19 +3,20 @@ import sys
 import time
 import pygame
 import torch
-from simple import MaxAgent
+from simple import MaxAgent, RandomAgent
 import numpy as np
 
 from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
 
-def debug_print(player,state_before, state_after, action):
+def debug_print(player, agent_class, state_before, state_after, action):
 
     format_state = lambda s: "[{}] {} [{}] {}".format(s[0], s[1:7], s[7], s[8:14])
 
-    print("{} action: {}\nState before:{}\nState after: {}\n".format(
+    print("{} {} action: {}\nState before:{}\nState after: {}\n".format(
         player,
+        agent_class.__name__,
         action,
         format_state(state_before),
         format_state(state_after),
@@ -31,9 +32,9 @@ def handle_game_end():
 
 
 def display_action(action) -> bool:
-    time.sleep(0.25)
+    time.sleep(0.5)
     env.indicate_action_on_screen(action)
-    time.sleep(0.75)
+    time.sleep(0.5)
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
 os.environ['SDL_VIDEO_CENTERED'] = '0'
@@ -53,7 +54,7 @@ else:
 
 env = MancalaEnv(has_screen=True)
 
-model_fn = os.path.join(os.getcwd(), "save", "good-1")
+model_fn = os.path.join(os.getcwd(), "save", "policy")
 policy_net = torch.load(model_fn, map_location='cpu')
 
 player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
@@ -80,7 +81,7 @@ while 1:
 
         state, reward, done, info = env.step(action)
 
-        debug_print("Player 1:", old_state, state, action)
+        debug_print("Player 1:", type(player1), old_state, state, action)
 
     else:  # Player 2
 
@@ -91,7 +92,7 @@ while 1:
 
         state, reward, done, info = env.step(action)
 
-        debug_print("Player 2:", p2_view, MancalaEnv.shift_view_p2(state), action)
+        debug_print("Player 2:", type(player2), p2_view, MancalaEnv.shift_view_p2(state), action)
 
     if done:
         handle_game_end()

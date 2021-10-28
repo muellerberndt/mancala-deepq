@@ -2,6 +2,17 @@ from agent import Agent
 from gymenv import MancalaEnv
 import numpy as np
 
+
+class RandomAgent(Agent):
+
+    def __init__(self):
+        super().__init__()
+
+    def select_action(self, state, valid_actions, **kwargs) -> np.int64:
+        super().select_action(state, valid_actions)
+
+        return np.random.choice(valid_actions)
+
 class MaxAgent(Agent):
 
     def __init__(self):
