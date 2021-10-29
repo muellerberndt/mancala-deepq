@@ -258,7 +258,7 @@ class MancalaEnv(gym.Env):
 
         # Maintaining a lead over the other player is rewarded.
 
-        if self.active_player == 0:
+        if player == 0:
             reward = float(self.get_player_score(0) - self.get_player_score(1)) / 10.
         else:
             reward = float(self.get_player_score(1) - self.get_player_score(0)) / 10.
@@ -268,7 +268,7 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-            if self.active_player == 0:
+            if player == 0:
                 reward += WINNER_REWARD
 
         if self.get_player_score(1) > 36:
@@ -276,7 +276,7 @@ class MancalaEnv(gym.Env):
 
             done = True
 
-            if self.active_player == 1:
+            if player == 1:
                 reward += WINNER_REWARD
 
         return self.get_observation(), reward, done, {}

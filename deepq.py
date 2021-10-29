@@ -34,12 +34,12 @@ if torch.cuda.is_available():
 
     BATCH_SIZE = 128
     GAMMA = 0.5
-    EPS_START = 1
+    EPS_START = 0.1
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
     MEMORY_SIZE = 5000000
-    LR = 0.001
-    UPDATE_TARGET = 1000
+    LR = 0.0001
+    UPDATE_TARGET = 2000
 
 else:
     # CPU Config
@@ -162,7 +162,6 @@ class DeepQAgent(Agent):
             if len(valid_actions) == 0:
                 return np.int64(0)
             else:
-                # return maxagent.select_action(state, valid_actions=valid_actions, env=env)
                 return np.random.choice(valid_actions)
         else:
 
@@ -236,7 +235,7 @@ if __name__ == '__main__':
         policy_net = MancalaAgentModel().to(device)
 
     agent = DeepQAgent(strategy, device, policy_net)
-    opponent = RandomAgent()
+    opponent = MaxAgent()
     policy_net = agent.policy_net
 
     memory = ReplayMem(MEMORY_SIZE)
@@ -257,6 +256,7 @@ if __name__ == '__main__':
     n_batches_total = 0
     n_batches_this_period = 0
     wins_model = 0
+    wins_opponent = 0
 
     while 1:
 
@@ -267,6 +267,20 @@ if __name__ == '__main__':
         episode_memory = []
 
         state = env.reset()
+
+        # We sometimes let player 2 make the first move to simulate training from the second player's perspective.
+
+        if random.random() > 0.5:
+            env.active_player = 1
+
+        # Randomize the initial state
+
+        for j in range(1, 3):
+            valid_actions = env.get_valid_actions()
+
+            action = np.random.choice(valid_actions)
+
+            state, reward, done, info = env.step(action)
 
         for timestep in count():
 
@@ -327,6 +341,9 @@ if __name__ == '__main__':
                 if env.get_player_score(0) > env.get_player_score(1):
                     wins_model += 1
 
+                if env.get_player_score(1) > env.get_player_score(0):
+                    wins_opponent += 1
+
                 if n_episodes_played % REPORTING_PERIOD == 0:
                     print("Current Q: {}\nNext Q: {}\nRewards: {}\nTarget Q: {}".format(
                         current_q_values.flatten(),
@@ -336,9 +353,11 @@ if __name__ == '__main__':
                         )
                     )
 
-                    print("Last {} episodes win percentage: {:.2f} %".format(
+                    print("Last {} episodes win percentage: Model {:.2f}%, Opponent {:.2f}%, Draw {:.2f}%".format(
                             REPORTING_PERIOD,
-                            100 * float(wins_model) / REPORTING_PERIOD
+                            100 * float(wins_model) / REPORTING_PERIOD,
+                            100 * float(wins_opponent) / REPORTING_PERIOD,
+                            100 * (float(1) - (wins_opponent + wins_model) / REPORTING_PERIOD)
                         )
                     )
 
@@ -380,6 +399,7 @@ if __name__ == '__main__':
                     writer.add_scalar("Win percentage", 100 * float(wins_model) / REPORTING_PERIOD, n_episodes_played)
 
                     wins_model = 0
+                    wins_opponent = 0
 
                     if n_batches_this_period > 0:
 
