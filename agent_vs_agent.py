@@ -32,9 +32,9 @@ def handle_game_end():
 
 
 def display_action(action) -> bool:
-    # time.sleep(0.5)
+    time.sleep(0.5)
     env.indicate_action_on_screen(action)
-    # time.sleep(0.5)
+    time.sleep(0.5)
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%i,%i' % (30, 100)
 os.environ['SDL_VIDEO_CENTERED'] = '0'
@@ -57,9 +57,9 @@ env = MancalaEnv(has_screen=True)
 model_fn = os.path.join(os.getcwd(), "save", "policy")
 policy_net = torch.load(model_fn, map_location='cpu')
 
-# player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 player1 = MaxAgent()
-player2 = MaxAgent()
+
 
 state = env.reset()
 

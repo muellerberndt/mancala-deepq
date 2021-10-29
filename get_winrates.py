@@ -7,20 +7,22 @@ from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
 if torch.cuda.is_available():
+    location = 'cuda'
     device = torch.device('cuda')
 else:
+    location = 'cpu'
     device = torch.device('cpu')
 
 model_fn = os.path.join(os.getcwd(), "save", "policy")
-policy_net = torch.load(model_fn, map_location='cpu')
+policy_net = torch.load(model_fn, map_location=location)
 
 
 ## Settings ##
 
 NUM_GAMES = 1000
+# player2 = RandomAgent()
 player1 = RandomAgent()
-player2 = RandomAgent()
-# player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
 

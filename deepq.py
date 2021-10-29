@@ -33,12 +33,12 @@ if torch.cuda.is_available():
     # Training settings
 
     BATCH_SIZE = 128
-    GAMMA = 0.5
-    EPS_START = 0.1
+    GAMMA = 0.65
+    EPS_START = 1.0
     EPS_END = 0.01
-    EPS_DECAY = 0.0000001
+    EPS_DECAY = 0.000001
     MEMORY_SIZE = 5000000
-    LR = 0.0001
+    LR = 0.001
     UPDATE_TARGET = 2000
 
 else:
@@ -164,6 +164,7 @@ class DeepQAgent(Agent):
             else:
                 return np.random.choice(valid_actions)
         else:
+
 
             if training_mode:
                 action_mask = torch.zeros(6, dtype=torch.float).to(device)
@@ -345,6 +346,8 @@ if __name__ == '__main__':
                     wins_opponent += 1
 
                 if n_episodes_played % REPORTING_PERIOD == 0:
+
+                    '''
                     print("Current Q: {}\nNext Q: {}\nRewards: {}\nTarget Q: {}".format(
                         current_q_values.flatten(),
                         next_q_values,
@@ -352,6 +355,7 @@ if __name__ == '__main__':
                         target_q_values
                         )
                     )
+                    '''
 
                     print("Last {} episodes win percentage: Model {:.2f}%, Opponent {:.2f}%, Draw {:.2f}%".format(
                             REPORTING_PERIOD,
