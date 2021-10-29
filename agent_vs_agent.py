@@ -12,13 +12,13 @@ from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
 def debug_print(player, agent_class, state_before, state_after, action):
 
-    format_state = lambda s: "[{}] {} [{}] {}".format(s[0], s[1:7], s[7], s[8:14])
+    format_state = lambda s: "[{}] {}\n{} [{}]".format(s[0], np.flip(s[8:13]), s[1:7], s[7])
 
-    print("{} {} action: {}\nState before:{}\nState after: {}\n".format(
+    print("## {} - {} ##\nState before:\n{}\nAction: {}\nState after:\n{}\n".format(
         player,
         agent_class.__name__,
-        action,
         format_state(state_before),
+        action,
         format_state(state_after),
     ))
 
@@ -57,8 +57,9 @@ env = MancalaEnv(has_screen=True)
 model_fn = os.path.join(os.getcwd(), "save", "policy")
 policy_net = torch.load(model_fn, map_location='cpu')
 
-player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+# player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 player1 = MaxAgent()
+player2 = MaxAgent()
 
 state = env.reset()
 
