@@ -185,7 +185,7 @@ class MancalaEnv(gym.Env):
                 if self.active_player == 0 and ptr < 7:
                     self.state[7] += self.state[opposite_index] + 1
                     self.state[ptr] = self.state[opposite_index] = 0
-                elif ptr > 7:
+                if self.active_player == 1 and ptr > 7:
                     self.state[0] += self.state[opposite_index] + 1
                     self.state[ptr] = self.state[opposite_index] = 0
 

@@ -20,9 +20,9 @@ policy_net = torch.load(model_fn, map_location=location)
 ## Settings ##
 
 NUM_GAMES = 1000
-# player2 = RandomAgent()
-player2 = MaxAgent()
-player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+player1 = RandomAgent()
+player2 = RandomAgent()
+# player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
 
@@ -41,13 +41,13 @@ for i in range(1, NUM_GAMES):
 
         if env.get_active_player() == 0:  # Player 1
 
-            action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+            action = player1.select_action(state, valid_actions, env=env, debug_q_values=False)
 
             state, reward, done, info = env.step(action)
 
         else:  # Player 2
 
-            action = player2.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env, debug_q_values=True)
+            action = player2.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env, debug_q_values=False)
 
             state, reward, done, info = env.step(action)
 
