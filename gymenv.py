@@ -214,7 +214,6 @@ class MancalaEnv(gym.Env):
         done = False
 
         player = self.active_player
-        initial_score = self.get_player_score(player)
 
         # End the game and return a negative reward if an invalid action is selected
 
@@ -246,15 +245,6 @@ class MancalaEnv(gym.Env):
                 self.state[i] = 0
 
             done = True
-
-        '''
-        score_increase = self.get_player_score(player) - initial_score
-
-        if score_increase > 1:
-            reward = float(score_increase) / 10.
-        else:
-            reward = 0
-        '''
 
         # Maintaining a lead over the other player is rewarded.
 
