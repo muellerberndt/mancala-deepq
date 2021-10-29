@@ -12,7 +12,7 @@ from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
 def debug_print(player, agent_class, state_before, state_after, action):
 
-    format_state = lambda s: "[{}] {}\n{} [{}]".format(s[0], np.flip(s[8:13]), s[1:7], s[7])
+    format_state = lambda s: "[{}] {}\n{} [{}]".format(s[0], np.flip(s[8:14]), s[1:7], s[7])
 
     print("## {} - {} ##\nState before:\n{}\nAction: {}\nState after:\n{}\n".format(
         player,
@@ -60,40 +60,48 @@ policy_net = torch.load(model_fn, map_location='cpu')
 player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 player1 = MaxAgent()
 
-
-state = env.reset()
-
-done = False
-
 clock = pygame.time.Clock()
 
 while 1:
 
-    env.render()
+    state = env.reset()
 
-    valid_actions = env.get_valid_actions()
+    for j in range(1, 3):
+        valid_actions = env.get_valid_actions()
 
-    if env.get_active_player() == 0:  # Player 1
-
-        old_state = state
-
-        action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
-        display_action(action)
+        action = np.random.choice(valid_actions)
 
         state, reward, done, info = env.step(action)
 
-        debug_print("Player 1:", type(player1), old_state, state, action)
+    while 1:
 
-    else:  # Player 2
+        env.render()
 
-        p2_view = MancalaEnv.shift_view_p2(state)
+        valid_actions = env.get_valid_actions()
 
-        action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
-        display_action(action)
+        if env.get_active_player() == 0:  # Player 1
 
-        state, reward, done, info = env.step(action)
+            old_state = state
 
-        debug_print("Player 2:", type(player2), p2_view, MancalaEnv.shift_view_p2(state), action)
+            action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+            display_action(action)
 
-    if done:
-        handle_game_end()
+            state, reward, done, info = env.step(action)
+
+            debug_print("Player 1:", type(player1), old_state, state, action)
+
+        else:  # Player 2
+
+            p2_view = MancalaEnv.shift_view_p2(state)
+
+            action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
+            display_action(action)
+
+            state, reward, done, info = env.step(action)
+
+            debug_print("Player 2:", type(player2), p2_view, MancalaEnv.shift_view_p2(state), action)
+
+        if done:
+            handle_game_end()
+
+            break

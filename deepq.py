@@ -34,7 +34,7 @@ if torch.cuda.is_available():
 
     BATCH_SIZE = 128
     GAMMA = 0.65
-    EPS_START = 1.0
+    EPS_START = 0.5
     EPS_END = 0.01
     EPS_DECAY = 0.000001
     MEMORY_SIZE = 5000000
@@ -236,7 +236,8 @@ if __name__ == '__main__':
         policy_net = MancalaAgentModel().to(device)
 
     agent = DeepQAgent(strategy, device, policy_net)
-    opponent = MaxAgent()
+
+    opponents = [MaxAgent(), RandomAgent()]
     policy_net = agent.policy_net
 
     memory = ReplayMem(MEMORY_SIZE)
@@ -269,19 +270,14 @@ if __name__ == '__main__':
 
         state = env.reset()
 
+        opponent = random.choice(opponents)
+
         # We sometimes let player 2 make the first move to simulate training from the second player's perspective.
 
         if random.random() > 0.5:
             env.active_player = 1
 
         # Randomize the initial state
-
-        for j in range(1, 3):
-            valid_actions = env.get_valid_actions()
-
-            action = np.random.choice(valid_actions)
-
-            state, reward, done, info = env.step(action)
 
         for timestep in count():
 
