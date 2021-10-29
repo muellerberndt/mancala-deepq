@@ -18,9 +18,9 @@ policy_net = torch.load(model_fn, map_location='cpu')
 ## Settings ##
 
 NUM_GAMES = 1000
-player1 = MaxAgent()
-player2 = MaxAgent()
-# player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+# player1 = DeepQAgent()
+player2 = RandomAgent()
+player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
 

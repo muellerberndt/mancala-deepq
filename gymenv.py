@@ -227,7 +227,7 @@ class MancalaEnv(gym.Env):
         '''
         Check whether the game has ended.
         The game ends when one player has no longer any stones left.
-        All remaining stones go to the player who made the last move.
+        The other player then gets the stones still remaining on their side
         '''
 
         if np.sum(self.state[1:7]) == 0:
