@@ -12,7 +12,7 @@ Sometimes select a random action
 0 -> always follow agent policy
 1 -> fully random
 '''
-RANDOMIZE_ACTIONS_RATE = 0.05
+RANDOMIZE_ACTIONS_RATE = 1
 
 if torch.cuda.is_available():
     location = 'cuda'
@@ -60,7 +60,7 @@ for i in range(1, NUM_GAMES):
 
         else:  # Player 2
 
-            if random.random() > RANDOMIZE_ACTIONS_RATE:
+            if random.random() < RANDOMIZE_ACTIONS_RATE:
                 action = random.choice(valid_actions)
             else:
                 action = player2.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env, debug_q_values=False)
