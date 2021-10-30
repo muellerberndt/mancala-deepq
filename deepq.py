@@ -33,7 +33,7 @@ Sometimes select a random action for the opponent
 RANDOMIZE_ACTIONS_RATE = 0.05
 
 # Start with player 2 half of the time
-SWAP_PLAYERS = True
+SWAP_PLAYERS = False
 
 if torch.cuda.is_available():
 
@@ -44,13 +44,13 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 64
-    GAMMA = 0.6
+    BATCH_SIZE = 256
+    GAMMA = 0.65
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.000001
     MEMORY_SIZE = 5000000
-    LR = 0.01
+    LR = 0.001
     UPDATE_TARGET = 1000
 
 else:
