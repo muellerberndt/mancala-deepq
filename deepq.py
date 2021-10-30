@@ -44,14 +44,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 32
-    GAMMA = 0.6
+    BATCH_SIZE = 64
+    GAMMA = 0.65
     EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000003
     MEMORY_SIZE = 5000000
-    LR = 0.001
-    UPDATE_TARGET = 2500
+    LR = 0.00001
+    UPDATE_TARGET = 2000
 
 else:
     # CPU Config
@@ -78,10 +78,10 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc3 = nn.Linear(128, 128)
-        self.head = nn.Linear(128, 6)
+        self.fc1 = nn.Linear(14, 16)
+        self.fc2 = nn.Linear(16, 16)
+        self.fc3 = nn.Linear(16, 16)
+        self.head = nn.Linear(16, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
