@@ -1,8 +1,7 @@
 import os
 import torch
-from simple import MaxAgent, RandomAgent
+from simple import MaxAgent
 import random
-import numpy as np
 
 from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
@@ -12,7 +11,7 @@ Sometimes select a random action
 0 -> always follow agent policy
 1 -> fully random
 '''
-RANDOMIZE_ACTIONS_RATE = 1
+RANDOMIZE_ACTIONS_RATE = 0.05
 
 if torch.cuda.is_available():
     location = 'cuda'
