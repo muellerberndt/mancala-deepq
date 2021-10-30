@@ -1,10 +1,14 @@
 import os
 import torch
 from simple import MaxAgent, RandomAgent
+import random
 import numpy as np
 
 from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
+
+# Sometimes select a random action
+RANDOMIZE_ACTIONS_RATE = 0.95
 
 if torch.cuda.is_available():
     location = 'cuda'
@@ -22,9 +26,9 @@ policy_net = torch.load(model_fn, map_location=location)
 NUM_GAMES = 1000
 # player1 = RandomAgent()
 
+# player1 = MaxAgent()
 player2 = MaxAgent()
 player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
-# player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
 
@@ -37,26 +41,25 @@ for i in range(1, NUM_GAMES):
 
     state = env.reset()
 
-    for j in range(1, 3):
-        valid_actions = env.get_valid_actions()
-
-        action = np.random.choice(valid_actions)
-
-        state, reward, done, info = env.step(action)
-
     while 1:
 
         valid_actions = env.get_valid_actions()
 
         if env.get_active_player() == 0:  # Player 1
 
-            action = player1.select_action(state, valid_actions, env=env, debug_q_values=False)
+            if random.random() > RANDOMIZE_ACTIONS_RATE:
+                action = random.choice(valid_actions)
+            else:
+                action = player1.select_action(state, valid_actions, env=env, debug_q_values=False)
 
             state, reward, done, info = env.step(action)
 
         else:  # Player 2
 
-            action = player2.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env, debug_q_values=False)
+            if random.random() > RANDOMIZE_ACTIONS_RATE:
+                action = random.choice(valid_actions)
+            else:
+                action = player2.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env, debug_q_values=False)
 
             state, reward, done, info = env.step(action)
 

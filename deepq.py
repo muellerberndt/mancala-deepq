@@ -17,11 +17,18 @@ from torch.utils.tensorboard import SummaryWriter
 
 from gymenv import MancalaEnv
 from agent import Agent
-from simple import MaxAgent, RandomAgent
+from simple import MaxAgent
 
 model_fn = os.path.join("save", "policy")
+
 REPORTING_PERIOD = 100
 STORE_LOSING_EPS_RATE = 0.9
+
+# Sometimes select a random action for the opponent
+RANDOMIZE_ACTIONS_RATE = 0.95
+
+# Start with player 2 half of the time
+SWAP_PLAYERS = True
 
 if torch.cuda.is_available():
 
@@ -32,14 +39,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 128
-    GAMMA = 0.65
-    EPS_START = 0.5
+    BATCH_SIZE = 64
+    GAMMA = 0.6
+    EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.000001
     MEMORY_SIZE = 5000000
-    LR = 0.001
-    UPDATE_TARGET = 2000
+    LR = 0.01
+    UPDATE_TARGET = 1000
 
 else:
     # CPU Config
@@ -165,7 +172,6 @@ class DeepQAgent(Agent):
                 return np.random.choice(valid_actions)
         else:
 
-
             if training_mode:
                 action_mask = torch.zeros(6, dtype=torch.float).to(device)
             else:
@@ -237,7 +243,9 @@ if __name__ == '__main__':
 
     agent = DeepQAgent(strategy, device, policy_net)
 
-    opponents = [MaxAgent(), RandomAgent()]
+    # opponents = [MaxAgent(), RandomAgent()]
+    opponents = [MaxAgent()]
+
     policy_net = agent.policy_net
 
     memory = ReplayMem(MEMORY_SIZE)
@@ -274,10 +282,8 @@ if __name__ == '__main__':
 
         # We sometimes let player 2 make the first move to simulate training from the second player's perspective.
 
-        if random.random() > 0.5:
+        if SWAP_PLAYERS and random.random() > 0.5:
             env.active_player = 1
-
-        # Randomize the initial state
 
         for timestep in count():
 
@@ -299,7 +305,10 @@ if __name__ == '__main__':
 
                 # Choose an action from player 2's perspective
 
-                player_2_action = opponent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
+                if random.random() > RANDOMIZE_ACTIONS_RATE:
+                    player_2_action = random.choice(valid_actions)
+                else:
+                    player_2_action = opponent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)
 
                 next_state, player2_reward, done, info = env.step(player_2_action)
 
