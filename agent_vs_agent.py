@@ -3,11 +3,20 @@ import sys
 import time
 import pygame
 import torch
-from simple import MaxAgent, RandomAgent
+from simple import MaxAgent
 import numpy as np
+import random
 
 from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
+
+'''
+Sometimes select a random action
+0 -> always follow agent policy
+1 -> fully random
+'''
+
+RANDOMIZE_ACTIONS_RATE = 0
 
 
 def debug_print(player, agent_class, state_before, state_after, action, reward):
@@ -67,13 +76,6 @@ while 1:
 
     state = env.reset()
 
-    for j in range(1, 3):
-        valid_actions = env.get_valid_actions()
-
-        action = np.random.choice(valid_actions)
-
-        state, reward, done, info = env.step(action)
-
     while 1:
 
         env.render()
@@ -84,7 +86,11 @@ while 1:
 
             old_state = state
 
-            action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+            if random.random() < RANDOMIZE_ACTIONS_RATE:
+                action = random.choice(valid_actions)
+            else:
+                action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+
             display_action(action)
 
             state, reward, done, info = env.step(action)
@@ -95,7 +101,11 @@ while 1:
 
             p2_view = MancalaEnv.shift_view_p2(state)
 
-            action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
+            if random.random() < RANDOMIZE_ACTIONS_RATE:
+                action = random.choice(valid_actions)
+            else:
+                action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
+
             display_action(action)
 
             state, reward, done, info = env.step(action)

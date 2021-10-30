@@ -24,8 +24,13 @@ model_fn = os.path.join("save", "policy")
 REPORTING_PERIOD = 100
 STORE_LOSING_EPS_RATE = 0.9
 
-# Sometimes select a random action for the opponent
-RANDOMIZE_ACTIONS_RATE = 0.95
+'''
+Sometimes select a random action for the opponent
+(to diversify gameplay)
+0 -> always follow agent policy
+1 -> fully random
+'''
+RANDOMIZE_ACTIONS_RATE = 0.05
 
 # Start with player 2 half of the time
 SWAP_PLAYERS = True
@@ -305,7 +310,7 @@ if __name__ == '__main__':
 
                 # Choose an action from player 2's perspective
 
-                if random.random() > RANDOMIZE_ACTIONS_RATE:
+                if random.random() < RANDOMIZE_ACTIONS_RATE:
                     player_2_action = random.choice(valid_actions)
                 else:
                     player_2_action = opponent.select_action(MancalaEnv.shift_view_p2(state), valid_actions, env=env)

@@ -7,8 +7,12 @@ import numpy as np
 from gymenv import MancalaEnv
 from deepq import MancalaAgentModel, DeepQAgent, MaxQStrategy
 
-# Sometimes select a random action
-RANDOMIZE_ACTIONS_RATE = 0.95
+'''
+Sometimes select a random action
+0 -> always follow agent policy
+1 -> fully random
+'''
+RANDOMIZE_ACTIONS_RATE = 0.05
 
 if torch.cuda.is_available():
     location = 'cuda'
@@ -47,7 +51,7 @@ for i in range(1, NUM_GAMES):
 
         if env.get_active_player() == 0:  # Player 1
 
-            if random.random() > RANDOMIZE_ACTIONS_RATE:
+            if random.random() < RANDOMIZE_ACTIONS_RATE:
                 action = random.choice(valid_actions)
             else:
                 action = player1.select_action(state, valid_actions, env=env, debug_q_values=False)
