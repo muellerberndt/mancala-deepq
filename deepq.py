@@ -23,7 +23,6 @@ model_fn = os.path.join("save", "policy")
 
 REPORTING_PERIOD = 100
 STORE_LOSING_EPS_RATE = 0.9
-EXTRA_WINNING_REWARD = 5
 
 '''
 Sometimes select a random action for the opponent
@@ -45,14 +44,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 128
-    GAMMA = 0.9
-    EPS_START = 0.8
+    BATCH_SIZE = 32
+    GAMMA = 0.6
+    EPS_START = 1
     EPS_END = 0.01
     EPS_DECAY = 0.0000003
     MEMORY_SIZE = 5000000
-    LR = 0.0001
-    UPDATE_TARGET = 1000
+    LR = 0.001
+    UPDATE_TARGET = 2500
 
 else:
     # CPU Config
@@ -246,8 +245,8 @@ if __name__ == '__main__':
 
     agent = DeepQAgent(strategy, device, policy_net)
 
-    opponents = [MaxAgent(), RandomAgent()]
-    # opponents = [MaxAgent()]
+    # opponents = [MaxAgent(), RandomAgent()]
+    opponents = [MaxAgent()]
 
     policy_net = agent.policy_net
 
@@ -351,14 +350,10 @@ if __name__ == '__main__':
 
                 if env.get_player_score(0) > env.get_player_score(1):
                     # Store the episode, giving the agent a high reward
-                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward + EXTRA_WINNING_REWARD))
                     wins_model += 1
 
                 elif env.get_player_score(1) > env.get_player_score(0):
-                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward))
                     wins_opponent += 1
-                else:
-                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward))
 
                 if n_episodes_played % REPORTING_PERIOD == 0:
 
