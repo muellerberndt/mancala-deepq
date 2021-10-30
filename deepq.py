@@ -27,13 +27,13 @@ STORE_LOSING_EPS_RATE = 0.9
 '''
 Sometimes select a random action for the opponent
 (to diversify gameplay)
-0 -> always follow agent policy
+0 -> always follow opponent policy
 1 -> fully random
 '''
-RANDOMIZE_ACTIONS_RATE = 0.05
+RANDOMIZE_ACTIONS_RATE = 0.02
 
 # Start with player 2 half of the time
-SWAP_PLAYERS = False
+SWAP_PLAYERS = True
 
 if torch.cuda.is_available():
 
@@ -44,13 +44,13 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 256
-    GAMMA = 0.65
-    EPS_START = 1
+    BATCH_SIZE = 128
+    GAMMA = 0.8
+    EPS_START = 0.8
     EPS_END = 0.01
-    EPS_DECAY = 0.000001
+    EPS_DECAY = 0.0000003
     MEMORY_SIZE = 5000000
-    LR = 0.001
+    LR = 0.0001
     UPDATE_TARGET = 1000
 
 else:
@@ -78,20 +78,17 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, 64)
-        self.fc4 = nn.Linear(64, 64)
-        self.fc5 = nn.Linear(64, 6)
+        self.fc1 = nn.Linear(14, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.fc3 = nn.Linear(128, 128)
+        self.head = nn.Linear(128, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
-        x = F.relu(self.fc4(x))
-        x = F.relu(self.fc5(x))
 
-        result = torch.sub(x, action_mask)
+        result = torch.sub(self.head(x), action_mask)
 
         return result
 
@@ -279,6 +276,8 @@ if __name__ == '__main__':
         ep_reward_model = 0
 
         player_1_last_state = None
+        player_1_last_score = 0
+
         episode_memory = []
 
         state = env.reset()

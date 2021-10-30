@@ -1,6 +1,6 @@
 import os
 import torch
-from simple import MaxAgent
+from simple import MaxAgent, RandomAgent
 import random
 
 from gymenv import MancalaEnv
@@ -11,7 +11,7 @@ Sometimes select a random action
 0 -> always follow agent policy
 1 -> fully random
 '''
-RANDOMIZE_ACTIONS_RATE = 0.05
+RANDOMIZE_ACTIONS_RATE = 0.02
 
 if torch.cuda.is_available():
     location = 'cuda'
@@ -29,8 +29,9 @@ policy_net = torch.load(model_fn, map_location=location)
 NUM_GAMES = 1000
 # player1 = RandomAgent()
 
-# player1 = MaxAgent()
+
 player2 = MaxAgent()
+# player1 = RandomAgent()
 player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
