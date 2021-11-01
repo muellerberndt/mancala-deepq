@@ -22,7 +22,7 @@ from simple import MaxAgent, RandomAgent
 model_fn = os.path.join("save", "policy")
 
 REPORTING_PERIOD = 100
-STORE_LOSING_EPS_RATE = 0.9
+STORE_LOSING_EPS_RATE = 0.2
 
 '''
 Sometimes select a random action for the opponent
@@ -30,10 +30,12 @@ Sometimes select a random action for the opponent
 0 -> always follow opponent policy
 1 -> fully random
 '''
-RANDOMIZE_ACTIONS_RATE = 0.03
+RANDOMIZE_ACTIONS_RATE = 0.02
 
 # Start with player 2 half of the time
 SWAP_PLAYERS = True
+
+WIN_REWARD = 1
 
 if torch.cuda.is_available():
 
@@ -44,14 +46,14 @@ if torch.cuda.is_available():
 
     # Training settings
 
-    BATCH_SIZE = 64
-    GAMMA = 0.65
+    BATCH_SIZE = 128
+    GAMMA = 0.6
     EPS_START = 1
     EPS_END = 0.01
-    EPS_DECAY = 0.0000003
+    EPS_DECAY = 0.000001
     MEMORY_SIZE = 5000000
-    LR = 0.00001
-    UPDATE_TARGET = 2000
+    LR = 0.0001
+    UPDATE_TARGET = 1000
 
 else:
     # CPU Config
@@ -67,7 +69,7 @@ else:
     EPS_END = 0.01
     EPS_DECAY = 0.0000001
     MEMORY_SIZE = 2000000
-    LR = 0.001
+    LR = 0.0001
     UPDATE_TARGET = 1000
 
 ZEROED_ACTION_MASK = torch.zeros((BATCH_SIZE, 6)).to(device)
@@ -78,15 +80,17 @@ class MancalaAgentModel(nn.Module):
     def __init__(self):
         super(MancalaAgentModel, self).__init__()
 
-        self.fc1 = nn.Linear(14, 16)
-        self.fc2 = nn.Linear(16, 16)
-        self.fc3 = nn.Linear(16, 16)
-        self.head = nn.Linear(16, 6)
+        self.fc1 = nn.Linear(14, 24)
+        self.fc2 = nn.Linear(24, 24)
+        self.fc3 = nn.Linear(24, 24)
+        self.fc4 = nn.Linear(24, 24)
+        self.head = nn.Linear(24, 6)
 
     def forward(self, x, action_mask):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
+        x = F.relu(self.fc4(x))
 
         result = torch.sub(self.head(x), action_mask)
 
@@ -277,6 +281,7 @@ if __name__ == '__main__':
 
         player_1_last_state = None
         player_1_last_score = 0
+        player_2_last_score = 0
 
         episode_memory = []
 
@@ -296,14 +301,21 @@ if __name__ == '__main__':
             if env.active_player == 0:
 
                 if player_1_last_state is not None:
-                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, player_1_reward))
+
+                    # Override reward. We want to consider the score *after* player 2 has taken their action.
+
+                    reward = max((env.get_player_score(0) - player_1_last_score) / 10 - 0.1, 0.0)
+                    # - (env.get_player_score(1) - player_2_last_score)
+
+                    ep_reward_model += reward
+                    episode_memory.append(Experience(player_1_last_state, player_1_action, state, reward))
+
+                player_1_last_state = state
+                player_1_last_score = env.get_player_score(0)
+                player_2_last_score = env.get_player_score(1)
 
                 player_1_action = agent.select_action(state, valid_actions, training_mode=False)
                 next_state, player_1_reward, done, info = env.step(player_1_action)
-
-                ep_reward_model += player_1_reward
-
-                player_1_last_state = state
 
             else:
 
@@ -348,24 +360,19 @@ if __name__ == '__main__':
 
             if done:
 
+                reward = max((env.get_player_score(0) - player_1_last_score) / 10 - 0.1, 0.0)
+
+                ep_reward_model += reward
+
                 if env.get_player_score(0) > env.get_player_score(1):
                     # Store the episode, giving the agent a high reward
+                    reward += WIN_REWARD
                     wins_model += 1
 
                 elif env.get_player_score(1) > env.get_player_score(0):
                     wins_opponent += 1
 
                 if n_episodes_played % REPORTING_PERIOD == 0:
-
-                    '''
-                    print("Current Q: {}\nNext Q: {}\nRewards: {}\nTarget Q: {}".format(
-                        current_q_values.flatten(),
-                        next_q_values,
-                        rewards,
-                        target_q_values
-                        )
-                    )
-                    '''
 
                     print("Last {} episodes win percentage: Model {:.2f}%, Opponent {:.2f}%, Draw {:.2f}%".format(
                             REPORTING_PERIOD,
@@ -375,7 +382,7 @@ if __name__ == '__main__':
                         )
                     )
 
-                if env.get_player_score(0) > env.get_player_score(1) or random.random() > STORE_LOSING_EPS_RATE:
+                if env.get_player_score(0) > env.get_player_score(1) or random.random() < STORE_LOSING_EPS_RATE:
 
                     [memory.push(exp) for exp in episode_memory]
 
@@ -383,7 +390,7 @@ if __name__ == '__main__':
                         player_1_last_state,
                         player_1_action,
                         np.zeros(14),
-                        player_1_reward))
+                        reward))
 
                     n_episodes_stored += 1
 

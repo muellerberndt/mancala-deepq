@@ -16,7 +16,7 @@ Sometimes select a random action
 1 -> fully random
 '''
 
-RANDOMIZE_ACTIONS_RATE = 0
+RANDOMIZE_ACTIONS_RATE = 0.02
 
 
 def debug_print(player, agent_class, state_before, state_after, action, reward):
@@ -89,7 +89,7 @@ while 1:
             if random.random() < RANDOMIZE_ACTIONS_RATE:
                 action = random.choice(valid_actions)
             else:
-                action = player1.select_action(state, valid_actions, env=env, debug_q_values=True)
+                action = player1.select_action(state, valid_actions, env=env, debug_q_values=False)
 
             display_action(action)
 
@@ -104,7 +104,7 @@ while 1:
             if random.random() < RANDOMIZE_ACTIONS_RATE:
                 action = random.choice(valid_actions)
             else:
-                action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=True)
+                action = player2.select_action(p2_view, valid_actions, env=env, debug_q_values=False)
 
             display_action(action)
 

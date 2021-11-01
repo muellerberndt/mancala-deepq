@@ -30,9 +30,9 @@ NUM_GAMES = 1000
 # player1 = RandomAgent()
 
 
-player2 = MaxAgent()
+player1 = MaxAgent()
 # player1 = RandomAgent()
-player1 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
+player2 = DeepQAgent(MaxQStrategy(), device, policy_net=policy_net)
 
 env = MancalaEnv(has_screen=False)
 
